@@ -27,6 +27,15 @@ abstract final class Sources {
     url: 'https://doi.org/10.1093/ajcn/51.2.241',
   );
 
+  static const frankenfield2005 = Source(
+    id: 'frankenfield-2005',
+    citation: 'Frankenfield D, Roth-Yousey L, Compher C. Comparison of '
+        'predictive equations for resting metabolic rate in healthy nonobese '
+        'and obese adults: a systematic review. J Am Diet Assoc. '
+        '2005;105(5):775-789.',
+    url: 'https://doi.org/10.1016/j.jada.2005.02.005',
+  );
+
   static const fao2004 = Source(
     id: 'fao-who-unu-2004',
     citation: 'FAO/WHO/UNU. Human energy requirements. Report of a Joint '

@@ -7,6 +7,7 @@ con su identificador estable.
 | Módulo | Qué usamos | Fuente |
 |---|---|---|
 | Energía en reposo | Ecuación de Mifflin-St Jeor | Mifflin et al., *Am J Clin Nutr* 1990;51(2):241-247 |
+| Margen de error | ±10 % en reposo | Frankenfield et al., *J Am Diet Assoc* 2005;105(5):775-789 |
 | Gasto total | PAL por estilo de vida (1.53 / 1.76 / 2.25) | FAO/WHO/UNU, *Human energy requirements*, 2004 |
 | Gasto por actividad | kcal = MET × kg × h, valores MET por código | 2024 Adult Compendium of Physical Activities (pacompendium.com) |
 | Screening previo | Algoritmo de autorización médica | Riebe et al., *Med Sci Sports Exerc* 2015;47(11):2473-2479 |

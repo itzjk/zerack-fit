@@ -56,6 +56,18 @@ double restingEnergyKcal({
   };
 }
 
+/// Margen de error de Mifflin-St Jeor: predice el gasto en reposo dentro del
+/// ±10 % del medido en la mayoría de adultos (Frankenfield et al., 2005). Lo
+/// usamos para mostrar rangos en vez de un número exacto.
+const restingEnergyErrorFraction = 0.10;
+const restingEnergyErrorSource = Sources.frankenfield2005;
+
+/// Rango estimado alrededor de un valor de energía.
+({double low, double high}) energyRange(double kcal) => (
+      low: kcal * (1 - restingEnergyErrorFraction),
+      high: kcal * (1 + restingEnergyErrorFraction),
+    );
+
 /// Gasto energético total diario estimado = reposo × PAL.
 double totalEnergyKcal({
   required double restingKcal,

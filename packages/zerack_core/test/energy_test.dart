@@ -95,4 +95,10 @@ void main() {
       expect(codes.length, Compendium.all.length);
     });
   });
+
+  test('energyRange da ±10 %', () {
+    final r = energyRange(2000);
+    expect(r.low, closeTo(1800, 1e-9));
+    expect(r.high, closeTo(2200, 1e-9));
+  });
 }
