@@ -24,6 +24,18 @@ puro y con pruebas:
 
 Todas las fuentes están en [SOURCES.md](SOURCES.md).
 
+Y la app (`apps/zerack_fit`, Flutter) ya tiene:
+
+- Aviso de bienestar, perfil y cuestionario de seguridad ACSM al entrar.
+- **Hoy:** chequeo diario con nota de 0 a 100 y energía del día como rango,
+  más registro manual de calorías comidas.
+- **Entrenar:** 8 ejercicios base, registro de series, sugerencia de carga
+  automática y botón **"Me siento mal"** que detiene la sesión ante signos de
+  alarma. Si el screening pide autorización médica, Entrenar queda bloqueado
+  hasta que la persona la confirme.
+- **Perfil:** editar datos, repetir el cuestionario, ver las fuentes y borrar
+  todo del teléfono.
+
 ## Principios
 
 1. **Sin fuente no hay regla.**
@@ -34,10 +46,22 @@ Todas las fuentes están en [SOURCES.md](SOURCES.md).
 
 ## Desarrollo
 
+Núcleo:
+
 ```bash
 cd packages/zerack_core
 dart pub get
 dart test
+```
+
+App:
+
+```bash
+cd apps/zerack_fit
+flutter pub get
+flutter test
+flutter run            # iPhone necesita Xcode; Android necesita Android Studio
+flutter run -d chrome  # versión web para probar rápido
 ```
 
 ## Licencia
