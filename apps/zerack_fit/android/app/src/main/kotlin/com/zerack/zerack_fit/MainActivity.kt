@@ -1,5 +1,7 @@
 package com.zerack.zerack_fit
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// Health Connect pide permisos con registerForActivityResult, que requiere
+// FragmentActivity.
+class MainActivity : FlutterFragmentActivity()

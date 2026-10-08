@@ -2,12 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>La cámara se usa para escanear tu plato, leer códigos de barras y estimar tu pulso con el flash.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Puedes elegir una foto de tu plato para que la IA identifique los alimentos.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>ZERACK Fit lee tu peso, tus pasos y tu pulso en reposo para ajustar tus estimaciones. Los datos se quedan en tu teléfono.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>ZERACK Fit guarda tus entrenamientos y tu peso en Salud.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Zerack Fit</string>
+	<string>ZERACK Fit</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

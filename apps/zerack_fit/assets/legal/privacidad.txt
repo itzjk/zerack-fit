@@ -1,0 +1,28 @@
+AVISO DE PRIVACIDAD — ZERACK Fit
+Versión 1.0 · 7 de octubre de 2026
+
+Responsable: ZERACK. Contacto: [PENDIENTE: correo de contacto del responsable].
+
+1. Qué datos usa la app
+- Perfil: sexo biológico, edad, peso, estatura y nivel de actividad.
+- Salud y bienestar: respuestas del cuestionario de seguridad (enfermedades diagnosticadas y síntomas), chequeo diario, pulso estimado, peso, comidas y entrenamientos.
+- Si lo activas: datos de Apple Health o Health Connect (peso, pasos, pulso en reposo).
+
+Varios de estos son datos personales sensibles. Por eso la app los trata con tu consentimiento expreso, que das al aceptar este aviso.
+
+2. Dónde se guardan
+Todo se guarda únicamente en tu teléfono. ZERACK Fit no tiene cuentas ni servidores propios y no recibe tus datos.
+
+3. Cuándo salen datos del teléfono (solo si tú usas la función)
+- Inteligencia artificial (opcional y desactivada por defecto). Al escanear un plato se envía la foto; al usar el asistente se envían tus mensajes y los datos de perfil, meta y registros que el asistente consulta. Se envían a Anthropic, PBC (proveedor del modelo Claude), o al servidor que tú configures, solo para generar la respuesta.
+- Código de barras. Se envía únicamente el número del código a Open Food Facts.
+- Apple Health / Health Connect. Los datos se intercambian dentro de tu teléfono con la app de salud del sistema.
+
+4. Para qué se usan
+Para calcular tus estimaciones de energía y proteína, generar tu plan de entrenamiento, mostrar tu progreso y, si lo activas, responder con la IA. No se usan para publicidad ni se venden.
+
+5. Tus derechos (ARCO)
+Puedes ver, corregir, exportar y borrar tus datos en cualquier momento desde Perfil: "Editar perfil", "Copiar respaldo" y "Borrar todo". Como los datos solo están en tu teléfono, borrarlos ahí los elimina por completo. Para revocar el consentimiento de la IA, apágala en Perfil.
+
+6. Cambios
+Si este aviso cambia, la app te lo mostrará antes de seguir.

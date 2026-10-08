@@ -98,4 +98,30 @@ abstract final class Es {
     'Muy mal',
     'Muy, muy mal',
   ];
+
+  static String goal(WeightGoal g) => switch (g) {
+    WeightGoal.maintain => 'Mantener peso',
+    WeightGoal.lose => 'Bajar de peso',
+  };
+
+  static String level(TrainingLevel l) => switch (l) {
+    TrainingLevel.novice => 'Principiante',
+    TrainingLevel.intermediate => 'Intermedio',
+  };
+
+  static String intensity(ActivityIntensity i) => switch (i) {
+    ActivityIntensity.moderate => 'Moderada (puedes hablar)',
+    ActivityIntensity.vigorous => 'Vigorosa (cuesta hablar)',
+  };
+
+  static String g(double v) => '${v.round()} g';
+
+  static String pulseFailure(PulseFailure f) => switch (f) {
+    PulseFailure.tooShort => 'La medición fue muy corta. Mantén el dedo 30 s.',
+    PulseFailure.noFinger =>
+      'No detecté el dedo. Cubre por completo la cámara y el flash.',
+    PulseFailure.poorSignal =>
+      'La señal salió irregular. Quédate quieto, sin presionar fuerte, y '
+          'vuelve a intentar.',
+  };
 }

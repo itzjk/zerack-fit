@@ -1,35 +1,37 @@
 import 'package:flutter/material.dart';
 
 import 'data/app_state.dart';
+import 'services.dart';
 import 'ui/home_shell.dart';
 import 'ui/onboarding/onboarding_flow.dart';
 import 'ui/scope.dart';
 
 class ZerackApp extends StatelessWidget {
-  const ZerackApp({super.key, required this.state});
+  const ZerackApp({super.key, required this.state, required this.services});
   final AppState state;
+  final Services services;
 
-  static const _seed = Color(0xFF00B37E);
+  static const seed = Color(0xFF00B37E);
+
+  static ThemeData _theme(Brightness b) => ThemeData(
+    colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: b),
+    useMaterial3: true,
+    cardTheme: const CardThemeData(margin: EdgeInsets.symmetric(vertical: 6)),
+  );
 
   @override
   Widget build(BuildContext context) {
-    return AppScope(
-      state: state,
-      child: MaterialApp(
-        title: 'ZERACK Fit',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: _seed),
-          useMaterial3: true,
+    return ServicesScope(
+      services: services,
+      child: AppScope(
+        state: state,
+        child: MaterialApp(
+          title: 'ZERACK Fit',
+          debugShowCheckedModeBanner: false,
+          theme: _theme(Brightness.light),
+          darkTheme: _theme(Brightness.dark),
+          home: const _Root(),
         ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: _seed,
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        ),
-        home: const _Root(),
       ),
     );
   }

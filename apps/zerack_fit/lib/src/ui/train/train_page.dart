@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:zerack_core/zerack_core.dart';
 
-import '../../data/exercises.dart';
 import '../scope.dart';
 import '../strings.dart';
+import 'workout_page.dart';
 
 class TrainPage extends StatelessWidget {
   const TrainPage({super.key});
@@ -15,19 +15,75 @@ class TrainPage extends StatelessWidget {
     final screening = state.screening!;
     if (!screening.canTrain) return const _ClearanceGate();
 
+    final next = state.nextWorkout;
+    final plan = state.plan;
+    final text = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Entrenar', style: Theme.of(context).textTheme.headlineSmall),
+        Text('Entrenar', style: text.headlineSmall),
         if (!screening.outcome.allowsVigorous)
           const Padding(
             padding: EdgeInsets.only(top: 8),
             child: Text(
-              'Mantén una intensidad moderada: deberías poder '
-              'hablar mientras haces la serie.',
+              'Mantén una intensidad moderada: deberías poder hablar '
+              'mientras haces la serie.',
             ),
           ),
         const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Toca hoy: ${next.name}', style: text.titleLarge),
+                Text(
+                  '${Es.level(plan.level)} · ${plan.daysPerWeek} días por '
+                  'semana · ${next.exercises.length} ejercicios',
+                ),
+                const SizedBox(height: 8),
+                for (final e in next.exercises)
+                  Text(
+                    '• ${e.exercise.name}: ${e.sets} × '
+                    '${e.minReps}–${e.maxReps}',
+                  ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  key: const Key('workout-start'),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Empezar entrenamiento'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => WorkoutPage(template: next),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Plan de cuerpo completo según ACSM: 8–12 repeticiones, '
+                  'descanso de 2 min en ejercicios grandes y 1 min en los '
+                  'chicos, 48 h entre sesiones del mismo músculo.',
+                  style: text.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+        Card(
+          child: ListTile(
+            key: const Key('activity-add'),
+            leading: const Icon(Icons.directions_walk),
+            title: const Text('Anotar actividad'),
+            subtitle: const Text('Caminar, bici, correr, nadar…'),
+            onTap: () => showDialog<void>(
+              context: context,
+              builder: (_) => const _ActivityDialog(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text('Ejercicios sueltos', style: text.titleMedium),
         for (final e in exerciseCatalog)
           Card(
             child: ListTile(
@@ -37,7 +93,7 @@ class TrainPage extends StatelessWidget {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => ExerciseLogPage(exercise: e),
+                  builder: (_) => WorkoutPage.single(exercise: e),
                 ),
               ),
             ),
@@ -46,8 +102,10 @@ class TrainPage extends StatelessWidget {
     );
   }
 
-  static String _subtitle(ProgressionDecision? d, Exercise e) =>
-      d == null ? 'Objetivo: ${e.targetReps} repeticiones' : Es.progression(d);
+  static String _subtitle(ProgressionDecision? d, Exercise e) {
+    if (e.bodyweight) return 'Peso corporal: suma repeticiones';
+    return d == null ? 'Objetivo: 8–12 repeticiones' : Es.progression(d);
+  }
 }
 
 class _ClearanceGate extends StatelessWidget {
@@ -99,193 +157,67 @@ class _ClearanceGate extends StatelessWidget {
   }
 }
 
-class ExerciseLogPage extends StatefulWidget {
-  const ExerciseLogPage({super.key, required this.exercise});
-  final Exercise exercise;
+class _ActivityDialog extends StatefulWidget {
+  const _ActivityDialog();
 
   @override
-  State<ExerciseLogPage> createState() => _ExerciseLogPageState();
+  State<_ActivityDialog> createState() => _ActivityDialogState();
 }
 
-class _ExerciseLogPageState extends State<ExerciseLogPage> {
-  final _load = TextEditingController();
-  final _reps = TextEditingController();
-  final List<LoggedSet> _sets = [];
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_load.text.isEmpty) {
-      final d = AppScope.of(context).suggestionFor(widget.exercise);
-      if (d != null) _load.text = Es.kg(d.nextLoadKg).replaceAll(' kg', '');
-    }
-  }
+class _ActivityDialogState extends State<_ActivityDialog> {
+  final _label = TextEditingController(text: 'Caminar');
+  final _minutes = TextEditingController();
+  ActivityIntensity _intensity = ActivityIntensity.moderate;
 
   @override
   void dispose() {
-    _load.dispose();
-    _reps.dispose();
+    _label.dispose();
+    _minutes.dispose();
     super.dispose();
   }
 
-  void _addSet() {
-    final load = double.tryParse(_load.text.replaceAll(',', '.'));
-    final reps = int.tryParse(_reps.text);
-    if (load == null || load < 0 || load > 1000 || reps == null || reps < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Revisa el peso y las repeticiones')),
-      );
-      return;
-    }
-    setState(() => _sets.add(LoggedSet(loadKg: load, reps: reps)));
-    _reps.clear();
-  }
-
-  Future<void> _stop() async {
-    final selected = await showDialog<Set<WarningSign>>(
-      context: context,
-      builder: (_) => const _WarningSignsDialog(),
-    );
-    if (selected == null || !mounted) return;
-    if (evaluateSessionSafety(selected) ==
-        SessionSafetyDecision.stopAndSeekCare) {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (c) => AlertDialog(
-          key: const Key('stop-dialog'),
-          title: const Text('Detén el entrenamiento'),
-          content: const Text(
-            'Lo que sientes es una señal de alarma. Para ahora, siéntate y '
-            'descansa. Si el síntoma no se quita o es fuerte, llama a '
-            'emergencias (911 en México).',
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(c).pop(),
-              child: const Text('Entendido'),
-            ),
-          ],
-        ),
-      );
-      if (mounted) Navigator.of(context).pop();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final e = widget.exercise;
     final state = AppScope.of(context);
-    final suggestion = state.suggestionFor(e);
-    final numeric = [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))];
-    return Scaffold(
-      appBar: AppBar(title: Text(e.name)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+    final minutes = int.tryParse(_minutes.text);
+    final valid = minutes != null && minutes > 0 && minutes <= 1440;
+    final vigorousBlocked = !state.screening!.outcome.allowsVigorous;
+    return AlertDialog(
+      title: const Text('Anotar actividad'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            suggestion == null
-                ? 'Primera vez: elige un peso que puedas mover ${e.targetReps} '
-                      'veces con buena técnica.'
-                : Es.progression(suggestion),
+          TextField(
+            key: const Key('activity-label'),
+            controller: _label,
+            decoration: const InputDecoration(labelText: 'Actividad'),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const Key('set-load'),
-                  controller: _load,
-                  decoration: const InputDecoration(labelText: 'Peso (kg)'),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
+          TextField(
+            key: const Key('activity-minutes'),
+            controller: _minutes,
+            decoration: const InputDecoration(labelText: 'Minutos'),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 8),
+          RadioGroup<ActivityIntensity>(
+            groupValue: _intensity,
+            onChanged: (v) => setState(() => _intensity = v ?? _intensity),
+            child: Column(
+              children: [
+                for (final i in ActivityIntensity.values)
+                  RadioListTile<ActivityIntensity>(
+                    value: i,
+                    enabled:
+                        !(vigorousBlocked && i == ActivityIntensity.vigorous),
+                    title: Text(Es.intensity(i)),
+                    contentPadding: EdgeInsets.zero,
                   ),
-                  inputFormatters: numeric,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  key: const Key('set-reps'),
-                  controller: _reps,
-                  decoration: const InputDecoration(labelText: 'Repeticiones'),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-              ),
-              IconButton.filled(
-                key: const Key('set-add'),
-                tooltip: 'Agregar serie',
-                onPressed: _addSet,
-                icon: const Icon(Icons.add),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          for (final (i, s) in _sets.indexed)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(child: Text('${i + 1}')),
-              title: Text('${Es.kg(s.loadKg)} × ${s.reps}'),
+              ],
             ),
-          const SizedBox(height: 16),
-          FilledButton(
-            key: const Key('session-save'),
-            onPressed: _sets.isEmpty
-                ? null
-                : () async {
-                    await state.logSession(e.id, List.of(_sets));
-                    if (context.mounted) Navigator.of(context).pop();
-                  },
-            child: const Text('Terminar ejercicio'),
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            key: const Key('feel-bad'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            icon: const Icon(Icons.warning_amber),
-            label: const Text('Me siento mal'),
-            onPressed: _stop,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _WarningSignsDialog extends StatefulWidget {
-  const _WarningSignsDialog();
-
-  @override
-  State<_WarningSignsDialog> createState() => _WarningSignsDialogState();
-}
-
-class _WarningSignsDialogState extends State<_WarningSignsDialog> {
-  final Set<WarningSign> _selected = {};
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('¿Qué sientes?'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final s in WarningSign.values)
-              CheckboxListTile(
-                key: Key('feel-${s.name}'),
-                value: _selected.contains(s),
-                onChanged: (v) => setState(
-                  () => v == true ? _selected.add(s) : _selected.remove(s),
-                ),
-                title: Text(Es.sign(s)),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-              ),
-          ],
-        ),
       ),
       actions: [
         TextButton(
@@ -293,9 +225,14 @@ class _WarningSignsDialogState extends State<_WarningSignsDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          key: const Key('feel-submit'),
-          onPressed: () => Navigator.of(context).pop(Set.of(_selected)),
-          child: const Text('Listo'),
+          key: const Key('activity-save'),
+          onPressed: valid
+              ? () async {
+                  await state.logActivity(_label.text, minutes, _intensity);
+                  if (context.mounted) Navigator.of(context).pop();
+                }
+              : null,
+          child: const Text('Guardar'),
         ),
       ],
     );
