@@ -146,7 +146,7 @@ class NutrientRow extends StatelessWidget {
       children: [
         cell('kcal', '${n.kcal.round()}'),
         cell('proteína', Es.g(n.proteinG)),
-        cell('carbohidratos', Es.g(n.carbsG)),
+        cell('carbohid.', Es.g(n.carbsG)),
         cell('grasa', Es.g(n.fatG)),
       ],
     );

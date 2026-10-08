@@ -49,14 +49,20 @@ class PlatformHealthBridge implements HealthBridge {
         !await _health.isHealthConnectAvailable()) {
       return false;
     }
-    final types = [..._read, HealthDataType.WORKOUT];
+    final android = defaultTargetPlatform == TargetPlatform.android;
     return _health.requestAuthorization(
-      types,
+      [
+        ..._read,
+        HealthDataType.WORKOUT,
+        // En Health Connect las calorías del entreno son un registro aparte.
+        if (android) HealthDataType.TOTAL_CALORIES_BURNED,
+      ],
       permissions: [
         HealthDataAccess.READ_WRITE, // peso
-        HealthDataAccess.READ,
-        HealthDataAccess.READ,
-        HealthDataAccess.WRITE,
+        HealthDataAccess.READ, // pasos
+        HealthDataAccess.READ, // pulso en reposo
+        HealthDataAccess.WRITE, // entreno
+        if (android) HealthDataAccess.WRITE,
       ],
     );
   }
