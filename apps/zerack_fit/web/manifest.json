@@ -1,11 +1,11 @@
 {
-    "name": "zerack_fit",
-    "short_name": "zerack_fit",
+    "name": "ZERACK Fit",
+    "short_name": "ZERACK Fit",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "theme_color": "#00B37E",
+    "description": "Entrenamiento y nutrición que se adaptan a ti. Open source y local-first.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
