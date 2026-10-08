@@ -86,4 +86,64 @@ abstract final class Sources {
         'Recommendations. Sports Med. 1995;20(5):321-327.',
     url: 'https://doi.org/10.2165/00007256-199520050-00003',
   );
+
+  static const acsmWeightLoss2001 = Source(
+    id: 'acsm-weight-loss-2001',
+    citation: 'Jakicic JM, et al. American College of Sports Medicine '
+        'position stand: Appropriate intervention strategies for weight loss '
+        'and prevention of weight regain for adults. Med Sci Sports Exerc. '
+        '2001;33(12):2145-2156.',
+    url: 'https://doi.org/10.1097/00005768-200112000-00026',
+  );
+
+  static const issnProtein2017 = Source(
+    id: 'issn-protein-2017',
+    citation: 'Jäger R, et al. International Society of Sports Nutrition '
+        'Position Stand: protein and exercise. J Int Soc Sports Nutr. '
+        '2017;14:20.',
+    url: 'https://doi.org/10.1186/s12970-017-0177-8',
+  );
+
+  static const who2020 = Source(
+    id: 'who-2020',
+    citation: 'Bull FC, et al. World Health Organization 2020 guidelines on '
+        'physical activity and sedentary behaviour. Br J Sports Med. '
+        '2020;54(24):1451-1462.',
+    url: 'https://doi.org/10.1136/bjsports-2020-102955',
+  );
+
+  static const acsmQuantity2011 = Source(
+    id: 'acsm-quantity-2011',
+    citation: 'Garber CE, et al. American College of Sports Medicine position '
+        'stand. Quantity and quality of exercise for developing and '
+        'maintaining cardiorespiratory, musculoskeletal, and neuromotor '
+        'fitness in apparently healthy adults. Med Sci Sports Exerc. '
+        '2011;43(7):1334-1359.',
+    url: 'https://doi.org/10.1249/MSS.0b013e318213fefb',
+  );
+
+  static const usdaSrLegacy = Source(
+    id: 'usda-sr-legacy-2018',
+    citation: 'U.S. Department of Agriculture, Agricultural Research Service. '
+        'FoodData Central: SR Legacy, April 2018. Dominio público (CC0).',
+    url: 'https://fdc.nal.usda.gov',
+  );
+
+  /// Todas las fuentes, para mostrarlas en la app.
+  static const all = [
+    mifflin1990,
+    frankenfield2005,
+    fao2004,
+    compendium2024,
+    acsmScreening2015,
+    acsmProgression2009,
+    acsmQuantity2011,
+    acsmWeightLoss2001,
+    tanaka2001,
+    acsmGuidelines,
+    hooper1995,
+    issnProtein2017,
+    who2020,
+    usdaSrLegacy,
+  ];
 }

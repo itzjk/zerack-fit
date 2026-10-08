@@ -1,0 +1,169 @@
+fdc_id,nombre,categoria,alias
+171287,Huevo entero crudo,proteina,blanquillo
+173424,Huevo cocido,proteina,huevo duro
+172183,Clara de huevo,proteina,
+171477,Pechuga de pollo asada (sin piel),proteina,pollo
+172388,Muslo de pollo asado (sin piel),proteina,pollo pierna
+172376,Pierna de pollo asada (sin piel),proteina,pollo
+174032,Carne molida de res 85/15 cocida,proteina,res picadillo
+174031,Carne molida de res 90/10 cocida,proteina,res picadillo
+168635,Bistec de res (sirloin) asado,proteina,res carne asada
+168611,Arrachera (falda de res) asada,proteina,res fajita
+174052,Bola de res (bottom round) cocida,proteina,res
+168233,Lomo de cerdo asado,proteina,puerco
+173859,Chorizo de cerdo crudo,proteina,
+167914,Tocino cocido,proteina,bacon
+173864,Jamón rebanado,proteina,
+168092,Jamón de pavo,proteina,
+172941,Pechuga de pavo rebanada,proteina,
+174614,Salchicha de res,proteina,hot dog
+171986,Atún en agua (lata),proteina,
+175139,Sardina en aceite (lata),proteina,
+175140,Sardina en tomate (lata),proteina,
+171998,Salmón silvestre cocido,proteina,
+175177,Tilapia cocida,proteina,mojarra pescado
+171956,Bacalao cocido,proteina,pescado blanco
+175180,Camarón cocido,proteina,
+168626,Hígado de res cocido,proteina,
+172475,Tofu firme,proteina,
+173180,Proteína en polvo (whey),proteina,suplemento
+173177,Proteína en polvo (whey aislada),proteina,suplemento isolate
+173735,Frijoles negros cocidos,leguminosa,
+175200,Frijoles pintos cocidos,leguminosa,bayos
+172438,Frijoles refritos (lata),leguminosa,
+172421,Lentejas cocidas,leguminosa,
+173757,Garbanzos cocidos,leguminosa,
+168878,Arroz blanco cocido,cereal,
+169704,Arroz integral cocido,cereal,
+175036,Tortilla de maíz,cereal,
+175037,Tortilla de harina,cereal,
+169694,Harina de maíz (masa) blanca,cereal,maseca
+174924,Pan blanco de caja,cereal,pan bimbo
+172688,Pan integral de caja,cereal,
+167935,Pan dulce,cereal,concha
+173904,Avena en hojuelas (cruda),cereal,
+173905,Avena cocida con agua,cereal,
+169737,Pasta cocida,cereal,espagueti sopa
+168894,Harina de trigo,cereal,
+174648,Cereal de hojuelas de maíz,cereal,corn flakes
+171646,Granola,cereal,
+172746,Galletas saladas,cereal,
+167959,Palomitas naturales,cereal,
+170440,Papa hervida (sin cáscara),tuberculo,
+168483,Camote horneado,tuberculo,batata
+170118,Papas a la francesa (horno),tuberculo,
+170698,Papas a la francesa (comida rápida),tuberculo,
+168216,Plátano macho verde hervido,tuberculo,
+169131,Plátano macho maduro horneado,tuberculo,
+169999,Elote amarillo cocido,verdura,maíz
+171265,Leche entera,lacteo,
+171267,Leche semidescremada 2%,lacteo,
+171269,Leche descremada,lacteo,light
+170894,Yogur griego natural sin grasa,lacteo,
+171284,Yogur natural entero,lacteo,
+171304,Yogur griego natural entero,lacteo,
+173414,Queso cheddar,lacteo,amarillo
+170847,Queso mozzarella semidescremado,lacteo,
+172182,Queso cottage 2%,lacteo,requesón
+172223,Queso fresco,lacteo,
+173420,Queso feta,lacteo,
+171257,Crema agria,lacteo,crema
+171255,Media crema (half and half),lacteo,
+167575,Helado de vainilla,lacteo,nieve
+175218,Bebida de soya natural,lacteo,leche de soya
+174832,Bebida de almendra sin azúcar,lacteo,leche de almendra
+173410,Mantequilla,grasa,
+171413,Aceite de oliva,grasa,
+172336,Aceite de canola,grasa,aceite vegetal
+171705,Aguacate,grasa,palta
+171009,Mayonesa,grasa,
+174294,Crema de cacahuate,grasa,mantequilla de maní
+170567,Almendras,grasa,
+173806,Cacahuates tostados sin sal,grasa,maní
+170187,Nueces de Castilla,grasa,nuez
+170182,Nuez pecana,grasa,nuez
+170162,Nuez de la India,grasa,marañón cashew
+170184,Pistaches,grasa,
+170554,Semillas de chía,grasa,
+170562,Semillas de girasol,grasa,
+170169,Coco (pulpa) crudo,grasa,
+173944,Plátano,fruta,banana guineo
+171688,Manzana con cáscara,fruta,
+169097,Naranja,fruta,
+169910,Mango,fruta,
+169926,Papaya,fruta,
+169124,Piña,fruta,
+167762,Fresas,fruta,frutillas
+167765,Sandía,fruta,
+174683,Uvas,fruta,
+173044,Guayaba,fruta,
+169092,Melón,fruta,
+169118,Pera,fruta,
+167750,Tuna (fruta del nopal),fruta,
+168155,Limón (verde),fruta,lima
+167746,Limón amarillo (sin cáscara),fruta,
+171711,Moras azules,fruta,arándanos blueberries
+168153,Kiwi,fruta,
+169928,Durazno,fruta,melocotón
+171719,Cerezas,fruta,
+167763,Tamarindo,fruta,
+168165,Pasas,fruta,
+168191,Dátiles,fruta,
+170457,Jitomate,verdura,tomate
+170000,Cebolla,verdura,
+170393,Zanahoria,verdura,
+169247,Lechuga romana,verdura,
+168462,Espinaca cruda,verdura,
+170379,Brócoli crudo,verdura,
+169967,Brócoli cocido,verdura,
+168409,Pepino con cáscara,verdura,
+168571,Nopales crudos,verdura,
+169388,Nopales cocidos,verdura,
+168576,Chile jalapeño,verdura,
+169395,Chile serrano,verdura,
+170427,Pimiento morrón verde,verdura,
+169291,Calabacita,verdura,zucchini
+169986,Coliflor,verdura,
+169251,Champiñones,verdura,hongos
+170402,Chayote,verdura,
+170420,Chícharos cocidos,verdura,arvejas
+169975,Col (repollo),verdura,
+169146,Betabel cocido,verdura,remolacha
+169296,Calabaza de castilla horneada,verdura,
+170073,Jícama,verdura,
+169276,Rábanos,verdura,
+169988,Apio,verdura,
+168421,Kale,verdura,col rizada
+169230,Ajo,verdura,
+169997,Cilantro,verdura,
+168566,Tomatillo (tomate verde),verdura,
+174524,Salsa roja (preparada),preparado,
+171824,Salsa verde (preparada),preparado,
+168556,Cátsup,preparado,ketchup
+170763,Taco suave de res con queso,preparado,
+170764,Taco suave de pollo con queso,preparado,
+172038,Burrito de frijoles,preparado,
+173278,Burrito de frijoles con queso y res,preparado,
+169035,Quesadilla de queso (restaurante),preparado,
+169855,Enchilada de queso (restaurante),preparado,
+169856,Tamal de queso (restaurante),preparado,
+173292,Pizza de queso,preparado,
+170717,Hamburguesa sencilla (comida rápida),preparado,
+173143,Totopos,preparado,chips nachos
+169655,Azúcar,dulce,
+169640,Miel,dulce,
+169641,Mermelada,dulce,
+170273,Chocolate amargo 70–85 %,dulce,
+172758,Dona glaseada,dulce,
+172717,Galletas con chispas de chocolate,dulce,
+167542,Barra de granola,dulce,
+171890,Café negro,bebida,
+173227,Té negro,bebida,
+171946,Agua de jamaica sin azúcar (té),bebida,hibisco
+173647,Agua natural,bebida,
+174852,Refresco de cola,bebida,coca
+174854,Refresco de naranja,bebida,
+169098,Jugo de naranja natural,bebida,
+174831,Agua de coco,bebida,
+168746,Cerveza,bebida,
+173190,Vino tinto,bebida,
