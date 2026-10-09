@@ -10,6 +10,13 @@ publicada**.
 > trata enfermedades** y no sustituye a un profesional de la salud. Si sientes
 > dolor en el pecho, mareo o falta de aire anormal, detente y busca atención.
 
+**Pruébala ya:** https://itzjk.github.io/zerack-fit/ (en iPhone ábrela en Safari →
+Compartir → "Agregar a inicio"). APK de Android en
+[Releases](https://github.com/itzjk/zerack-fit/releases).
+
+![iPhone](docs/screenshots/iphone.jpg)
+![Samsung](docs/screenshots/samsung.jpg)
+
 ## Qué hace
 
 **Hoy**
