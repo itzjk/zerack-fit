@@ -58,6 +58,26 @@ void main() {
       },
     );
 
+    test('en navegador agrega la cabecera de CORS de la API directa', () async {
+      final api = ScriptedClaude([textResponse('ok'), textResponse('ok')]);
+      ClaudeClient c(String? base) => ClaudeClient(
+        httpClient: api.client,
+        config: ClaudeConfig(apiKey: 'sk', baseUrl: base),
+        browser: true,
+        sleep: (_) async {},
+      );
+      await c(null).create(system: 'S', messages: const []);
+      await c('https://proxy.example').create(system: 'S', messages: const []);
+      expect(
+        api.headers[0]['anthropic-dangerous-direct-browser-access'],
+        'true',
+      );
+      expect(
+        api.headers[1].containsKey('anthropic-dangerous-direct-browser-access'),
+        isFalse,
+      );
+    });
+
     test('sin clave en API directa no hace la llamada', () async {
       var calls = 0;
       final c = _client(

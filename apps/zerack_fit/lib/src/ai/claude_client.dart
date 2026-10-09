@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 /// Nombre del asistente en la app. Un solo lugar para cambiarlo.
@@ -91,14 +92,20 @@ class ClaudeClient {
     required this.config,
     this.timeout = const Duration(seconds: 120),
     this.maxRetries = 2,
+    bool? browser,
     Future<void> Function(Duration)? sleep,
   }) : _http = httpClient,
+       browser = browser ?? kIsWeb,
        _sleep = sleep ?? Future<void>.delayed;
 
   final http.Client _http;
   final ClaudeConfig config;
   final Duration timeout;
   final int maxRetries;
+
+  /// Corre en un navegador (versión web). La API directa exige una cabecera
+  /// explícita para aceptar llamadas desde el navegador (CORS).
+  final bool browser;
   final Future<void> Function(Duration) _sleep;
 
   static const apiVersion = '2023-06-01';
@@ -139,6 +146,8 @@ class ClaudeClient {
       'anthropic-version': apiVersion,
       if (config.apiKey?.isNotEmpty ?? false) 'x-api-key': config.apiKey!,
       if (config.isDirect) 'anthropic-beta': fallbackBeta,
+      if (config.isDirect && browser)
+        'anthropic-dangerous-direct-browser-access': 'true',
     };
     final uri = Uri.parse('${config.baseUrl}/v1/messages');
 
