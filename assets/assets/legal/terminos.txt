@@ -1,0 +1,22 @@
+TÉRMINOS DE USO — ZERACK Fit
+Versión 1.0 · 7 de octubre de 2026
+
+1. Qué es ZERACK Fit
+Una herramienta de entrenamiento y bienestar. No es un dispositivo médico, no diagnostica, no trata ni previene enfermedades y no sustituye a un profesional de la salud.
+
+2. Estimaciones
+Las calorías, la proteína, el pulso por cámara, la nota del día y las porciones que estima la IA son aproximaciones basadas en fórmulas y datos publicados. Pueden equivocarse. Revisa siempre lo que registras.
+
+3. Seguridad
+- Responde con honestidad el cuestionario de seguridad. Si recomienda autorización médica, obtenla antes de entrenar.
+- Si sientes dolor en el pecho, falta de aire, mareo, desmayo o palpitaciones, detén el ejercicio y busca atención médica (911 en México).
+- Si estás embarazada, tienes una enfermedad o tomas medicamentos, consulta a tu médico antes de cambiar tu alimentación o ejercicio.
+
+4. Inteligencia artificial
+El asistente y el escáner son opcionales. Sus respuestas pueden contener errores y no son consejo médico ni nutricional profesional.
+
+5. Software libre
+ZERACK Fit se distribuye bajo la licencia MIT, "tal cual", sin garantías de ningún tipo. En la medida que permita la ley, los autores no son responsables por daños derivados de su uso.
+
+6. Datos de terceros
+Datos nutricionales: USDA FoodData Central (dominio público). Productos empacados: Open Food Facts (ODbL), capturados por la comunidad.
