@@ -88,10 +88,10 @@ class _AiGateState extends State<AiGate> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Cuando usas la IA, la app envía ${widget.sends} y los datos '
-          'necesarios de tu perfil a Anthropic, el proveedor del modelo Claude, '
-          'para procesarlos. Nada se envía si no la usas. El resto de tus '
-          'datos se queda en este teléfono.\n\n'
+          'Cuando usas esta función, la app envía ${widget.sends} a '
+          'Anthropic, el proveedor del modelo Claude, para procesarlo. Nada '
+          'se envía si no la usas. El resto de tus datos se queda en este '
+          'teléfono.\n\n'
           'La IA puede equivocarse: revisa siempre lo que propone. No es '
           'consejo médico.',
         ),

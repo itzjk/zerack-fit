@@ -110,6 +110,17 @@ class _WeightCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     final first = weights.isEmpty ? null : parseDayKey(weights.first.day);
+    final ys = [for (final w in weights) w.kg];
+    final lo = ys.isEmpty ? 0.0 : ys.reduce((a, b) => a < b ? a : b);
+    final hi = ys.isEmpty ? 0.0 : ys.reduce((a, b) => a > b ? a : b);
+    // Rango redondeado a un intervalo "bonito" para que las etiquetas del eje
+    // no se encimen con el mínimo y el máximo.
+    final interval = _niceInterval(hi - lo);
+    final minY = (lo / interval).floor() * interval;
+    final maxY = ((hi / interval).ceil() * interval).clamp(
+      minY + interval,
+      double.infinity,
+    );
     final spots = [
       for (final w in weights)
         FlSpot(parseDayKey(w.day).difference(first!).inDays.toDouble(), w.kg),
@@ -146,16 +157,19 @@ class _WeightCard extends StatelessWidget {
                 height: 180,
                 child: LineChart(
                   LineChartData(
-                    gridData: const FlGridData(show: true),
+                    minY: minY,
+                    maxY: maxY.toDouble(),
+                    gridData: FlGridData(horizontalInterval: interval),
                     borderData: FlBorderData(show: false),
-                    titlesData: const FlTitlesData(
-                      topTitles: AxisTitles(),
-                      rightTitles: AxisTitles(),
-                      bottomTitles: AxisTitles(),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(),
+                      rightTitles: const AxisTitles(),
+                      bottomTitles: const AxisTitles(),
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 40,
+                          interval: interval,
                         ),
                       ),
                     ),
@@ -195,7 +209,7 @@ class _StrengthCard extends StatelessWidget {
       rows.add(
         Text(
           '${e.name}: ${Es.kg(first)} → ${Es.kg(last)} '
-          '(${s.length} sesiones)',
+          '(${s.length} ${s.length == 1 ? 'sesión' : 'sesiones'})',
         ),
       );
     }
@@ -216,4 +230,12 @@ class _StrengthCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 0.5, 1, 2 o 5 kg según el rango, para 2–6 líneas en la gráfica.
+double _niceInterval(double range) {
+  for (final i in [0.5, 1.0, 2.0, 5.0]) {
+    if (range / i <= 5) return i;
+  }
+  return 10;
 }
