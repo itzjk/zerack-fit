@@ -65,8 +65,11 @@ Límites (no negociables):
       'description':
           'Devuelve el perfil, la meta, la energía y proteína objetivo, lo '
           'que comió hoy, el chequeo diario, el resumen semanal de actividad, '
-          'el resultado del cuestionario de seguridad y el próximo '
-          'entrenamiento. Úsala antes de cualquier consejo personal.',
+          'el resultado del cuestionario de seguridad, el próximo '
+          'entrenamiento y un resumen compacto de los últimos 30 días '
+          '(promedios de calorías, proteína, grasas, carbohidratos, días de '
+          'entreno, índice Hooper y tendencia de peso). '
+          'Úsala antes de cualquier consejo personal.',
       'input_schema': {
         'type': 'object',
         'properties': <String, Object?>{},
@@ -226,6 +229,7 @@ Límites (no negociables):
     final week = s.weekSummary;
     final screening = s.screening;
     final next = s.nextWorkout;
+    final history30 = s.thirtyDaySummary();
     return {
       'fecha': s.today,
       if (p != null)
@@ -271,6 +275,7 @@ Límites (no negociables):
             '${e.exercise.name}: ${e.sets}x${e.minReps}-${e.maxReps}',
         ],
       },
+      if (history30 != null) 'historial_30_dias': history30,
     };
   }
 

@@ -129,6 +129,131 @@ class AppState extends ChangeNotifier {
       ),
   ], _clock());
 
+  // ---------------------------------------------------------------- historial 30 días
+
+  /// Resumen compacto de los últimos 30 días para el contexto del asistente.
+  ///
+  /// Devuelve promedios y tendencias; no expone el detalle diario para no
+  /// inflar el contexto. Si el usuario es nuevo y no hay datos devuelve `null`.
+  Map<String, Object?>? thirtyDaySummary() {
+    final now = _clock();
+    final days = 30;
+
+    // Construye un mapa día→datos para el periodo.
+    final kcalByDay = <String, double>{};
+    final proteinByDay = <String, double>{};
+    final fatByDay = <String, double>{};
+    final carbsByDay = <String, double>{};
+    final workoutMinByDay = <String, int>{};
+    final hooperByDay = <String, int>{};
+    final weightByDay = <String, double>{};
+
+    for (var i = days - 1; i >= 0; i--) {
+      final day = dayKey(now.subtract(Duration(days: i)));
+      final nutrients = _food
+          .where((f) => f.day == day)
+          .fold(Nutrients.zero, (sum, f) => sum + f.nutrients);
+      if (nutrients.kcal > 0) {
+        kcalByDay[day] = nutrients.kcal;
+        proteinByDay[day] = nutrients.proteinG;
+        fatByDay[day] = nutrients.fatG;
+        carbsByDay[day] = nutrients.carbsG;
+      }
+      final wMins = _workouts
+          .where((w) => w.day == day)
+          .fold<int>(0, (a, w) => a + w.minutes);
+      if (wMins > 0) workoutMinByDay[day] = wMins;
+    }
+
+    for (final c in _checkIns) {
+      hooperByDay[c.day] = c.score;
+    }
+    for (final w in _weights) {
+      weightByDay[w.day] = w.kg;
+    }
+
+    // Si no hay ningún dato registrado (usuario nuevo) devuelve null.
+    if (kcalByDay.isEmpty && workoutMinByDay.isEmpty && weightByDay.isEmpty) {
+      return null;
+    }
+
+    double? avg(Iterable<double> vals) {
+      if (vals.isEmpty) return null;
+      return vals.reduce((a, b) => a + b) / vals.length;
+    }
+
+    // Tendencia lineal simple: pendiente de regresión sobre índices 0..n-1.
+    // Devuelve null si hay menos de 3 puntos.
+    double? trend(List<double> vals) {
+      if (vals.length < 3) return null;
+      final n = vals.length;
+      final xMean = (n - 1) / 2.0;
+      final yMean = vals.reduce((a, b) => a + b) / n;
+      double num = 0, den = 0;
+      for (var i = 0; i < n; i++) {
+        num += (i - xMean) * (vals[i] - yMean);
+        den += (i - xMean) * (i - xMean);
+      }
+      return den == 0 ? null : num / den;
+    }
+
+    final kcalVals = kcalByDay.values.toList();
+    final proteinVals = proteinByDay.values.toList();
+    final hooperVals = <int>[];
+    for (var i = days - 1; i >= 0; i--) {
+      final day = dayKey(now.subtract(Duration(days: i)));
+      if (hooperByDay.containsKey(day)) hooperVals.add(hooperByDay[day]!);
+    }
+    final weightEntries = <String, double>{};
+    for (var i = days - 1; i >= 0; i--) {
+      final day = dayKey(now.subtract(Duration(days: i)));
+      if (weightByDay.containsKey(day)) weightEntries[day] = weightByDay[day]!;
+    }
+    final weightVals = weightEntries.values.toList();
+
+    final kcalTrendPerDay = trend(kcalVals);
+    final weightTrendPerDay = trend(weightVals);
+
+    return {
+      'periodo_dias': days,
+      'dias_con_comida_registrada': kcalByDay.length,
+      'dias_con_entreno': workoutMinByDay.length,
+      'dias_con_hooper': hooperVals.length,
+      if (kcalByDay.isNotEmpty) ...{
+        'kcal_promedio': (avg(kcalVals)!).round(),
+        'proteina_promedio_g': double.parse(
+          (avg(proteinVals) ?? 0).toStringAsFixed(1),
+        ),
+        'grasa_promedio_g': double.parse(
+          (avg(fatByDay.values) ?? 0).toStringAsFixed(1),
+        ),
+        'carbos_promedio_g': double.parse(
+          (avg(carbsByDay.values) ?? 0).toStringAsFixed(1),
+        ),
+        if (kcalTrendPerDay != null)
+          'tendencia_kcal_por_dia': double.parse(
+            kcalTrendPerDay.toStringAsFixed(2),
+          ),
+      },
+      if (workoutMinByDay.isNotEmpty)
+        'minutos_entreno_promedio_por_dia_activo': (workoutMinByDay.values
+                    .fold<int>(0, (a, b) => a + b) /
+                workoutMinByDay.length)
+            .round(),
+      if (hooperVals.isNotEmpty)
+        'hooper_promedio_0_100':
+            (hooperVals.reduce((a, b) => a + b) / hooperVals.length).round(),
+      if (weightVals.isNotEmpty) ...{
+        'peso_inicial_kg': weightVals.first,
+        'peso_actual_kg': weightVals.last,
+        if (weightTrendPerDay != null)
+          'tendencia_peso_kg_por_dia': double.parse(
+            weightTrendPerDay.toStringAsFixed(4),
+          ),
+      },
+    };
+  }
+
   // ---------------------------------------------------------------- carga
 
   Future<void> load() async {
