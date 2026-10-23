@@ -10,6 +10,7 @@ import '../scope.dart';
 import '../strings.dart';
 import 'legal_page.dart';
 import 'profile_form.dart';
+import '../theme/zk_widgets.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -25,7 +26,7 @@ class ProfilePage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Perfil', style: text.headlineSmall),
+        const ZkPageTitle('Perfil', eyebrow: 'Cuenta local'),
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: Text('${Es.sex(p.sex)}, ${p.ageYears} años'),
@@ -117,7 +118,7 @@ class _GoalsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Meta y plan', style: text.titleMedium),
+        const ZkSectionLabel('Meta y plan'),
         const SizedBox(height: 8),
         SegmentedButton<WeightGoal>(
           key: const Key('goal-choice'),
@@ -196,11 +197,10 @@ class _AiSectionState extends State<_AiSection> {
     final state = AppScope.of(context);
     final ai = ServicesScope.of(context).ai;
     final s = state.settings;
-    final text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(assistantName, style: text.titleMedium),
+        const ZkSectionLabel(assistantName),
         SwitchListTile(
           key: const Key('ai-switch'),
           contentPadding: EdgeInsets.zero,
@@ -327,11 +327,10 @@ class _HealthSectionState extends State<_HealthSection> {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final health = ServicesScope.of(context).health;
-    final text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Apple Health / Health Connect', style: text.titleMedium),
+        const ZkSectionLabel('Apple Health / Health Connect'),
         SwitchListTile(
           key: const Key('health-switch'),
           contentPadding: EdgeInsets.zero,
@@ -391,11 +390,10 @@ class _DataSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    final text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tus datos', style: text.titleMedium),
+        const ZkSectionLabel('Tus datos'),
         const SizedBox(height: 4),
         const Text('Se guardan solo en este teléfono.'),
         const SizedBox(height: 8),

@@ -7,6 +7,8 @@ import '../../services.dart';
 import '../common/text_prompt.dart';
 import '../scope.dart';
 import '../strings.dart';
+import '../theme/zerack_theme.dart';
+import '../theme/zk_widgets.dart';
 
 class ProgressPage extends StatelessWidget {
   const ProgressPage({super.key});
@@ -20,7 +22,7 @@ class ProgressPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Progreso', style: text.headlineSmall),
+        const ZkPageTitle('Progreso', eyebrow: 'Evolución'),
         const _WeightCard(),
         Card(
           child: Padding(
@@ -159,7 +161,13 @@ class _WeightCard extends StatelessWidget {
                   LineChartData(
                     minY: minY,
                     maxY: maxY.toDouble(),
-                    gridData: FlGridData(horizontalInterval: interval),
+                    gridData: FlGridData(
+                      horizontalInterval: interval,
+                      getDrawingHorizontalLine: (_) =>
+                          const FlLine(color: Zk.hairline, strokeWidth: 1),
+                      getDrawingVerticalLine: (_) =>
+                          const FlLine(color: Zk.hairline, strokeWidth: 1),
+                    ),
                     borderData: FlBorderData(show: false),
                     titlesData: FlTitlesData(
                       topTitles: const AxisTitles(),
@@ -170,15 +178,42 @@ class _WeightCard extends StatelessWidget {
                           showTitles: true,
                           reservedSize: 40,
                           interval: interval,
+                          getTitlesWidget: (v, meta) => SideTitleWidget(
+                            meta: meta,
+                            child: Text(
+                              meta.formattedValue,
+                              style: text.bodySmall,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     lineBarsData: [
                       LineChartBarData(
                         spots: spots,
-                        color: scheme.primary,
-                        barWidth: 3,
-                        dotData: const FlDotData(show: true),
+                        color: scheme.secondary,
+                        barWidth: 2.5,
+                        isCurved: true,
+                        curveSmoothness: 0.18,
+                        preventCurveOverShooting: true,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, bar, index) =>
+                              FlDotCirclePainter(
+                                radius: 3.5,
+                                color: Zk.black,
+                                strokeColor: Zk.cyan,
+                                strokeWidth: 2,
+                              ),
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0x3322D3EE), Color(0x0022D3EE)],
+                          ),
+                        ),
                       ),
                     ],
                   ),

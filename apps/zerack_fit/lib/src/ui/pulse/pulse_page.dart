@@ -8,6 +8,7 @@ import 'package:zerack_core/zerack_core.dart';
 import '../scope.dart';
 import '../strings.dart';
 import 'red_channel.dart';
+import '../theme/zk_widgets.dart';
 
 /// Pulso en reposo con el dedo sobre la cámara y el flash (beta).
 class PulsePage extends StatefulWidget {
@@ -137,7 +138,7 @@ class _PulsePageState extends State<PulsePage> {
   }
 
   List<Widget> _intro(BuildContext context) => [
-    const Icon(Icons.favorite_border, size: 64),
+    const ZkHeroIcon(Icons.favorite_border),
     const SizedBox(height: 16),
     const Text(
       '1. Siéntate y descansa un minuto.\n'
@@ -202,7 +203,7 @@ class _PulsePageState extends State<PulsePage> {
     final text = Theme.of(context).textTheme;
     if (!r.isOk) {
       return [
-        const Icon(Icons.error_outline, size: 64),
+        const ZkHeroIcon(Icons.error_outline),
         const SizedBox(height: 16),
         Text(Es.pulseFailure(r.failure!)),
         const SizedBox(height: 24),

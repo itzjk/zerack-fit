@@ -11,6 +11,7 @@ import '../common/ai_gate.dart';
 import '../common/portion_sheet.dart';
 import '../scope.dart';
 import 'food_search_page.dart';
+import '../theme/zk_widgets.dart';
 
 /// Escanea un plato con la IA. La IA identifica y estima gramos; los
 /// nutrientes salen del USDA y la persona confirma todo antes de guardar.
@@ -148,7 +149,7 @@ class _ScanPageState extends State<ScanPage> {
   Widget _intro(BuildContext context) => ListView(
     padding: const EdgeInsets.all(24),
     children: [
-      const Icon(Icons.restaurant, size: 64),
+      const ZkHeroIcon(Icons.restaurant),
       const SizedBox(height: 16),
       const Text(
         'Toma la foto desde arriba, con todo el plato a la vista. La IA '

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../ai/claude_client.dart' show assistantName;
 import '../../services.dart';
 import '../scope.dart';
+import '../theme/zk_widgets.dart';
 
 /// Muestra [child] solo si la persona dio su consentimiento y hay forma de
 /// conectarse a la IA. Si no, explica qué se envía y deja activarla ahí mismo.
@@ -80,7 +81,7 @@ class _AiGateState extends State<AiGate> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Icon(Icons.auto_awesome_outlined, size: 56),
+        const ZkHeroIcon(Icons.auto_awesome_outlined),
         const SizedBox(height: 16),
         Text(
           'Para ${widget.feature} se usa $assistantName',
@@ -112,7 +113,7 @@ class _AiGateState extends State<AiGate> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Icon(Icons.key_outlined, size: 56),
+        const ZkHeroIcon(Icons.key_outlined),
         const SizedBox(height: 16),
         Text('Conecta la IA', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),

@@ -11,6 +11,8 @@ import '../food/scan_page.dart';
 import '../pulse/pulse_page.dart';
 import '../scope.dart';
 import '../strings.dart';
+import '../theme/zk_widgets.dart';
+import '../theme/zerack_theme.dart';
 
 class TodayPage extends StatelessWidget {
   const TodayPage({super.key});
@@ -19,7 +21,18 @@ class TodayPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: const [_ReadinessCard(), _EnergyCard(), _WeekCard()],
+      children: const [
+        Padding(
+          padding: EdgeInsets.fromLTRB(4, 4, 4, 12),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: ZkWordmark(suffix: 'Fit'),
+          ),
+        ),
+        _ReadinessCard(),
+        _EnergyCard(),
+        _WeekCard(),
+      ],
     );
   }
 }
@@ -61,8 +74,9 @@ class _ReadinessCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                FilledButton.tonal(
+                FilledButton(
                   key: const Key('checkin-open'),
+                  style: ZerackTheme.accentStyle,
                   onPressed: () => _push(context, const CheckInPage()),
                   child: Text(
                     checkIn == null ? 'Hacer chequeo' : 'Repetir chequeo',

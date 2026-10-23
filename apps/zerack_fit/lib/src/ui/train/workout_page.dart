@@ -7,6 +7,7 @@ import 'package:zerack_core/zerack_core.dart';
 import '../../services.dart';
 import '../scope.dart';
 import '../strings.dart';
+import '../theme/zerack_theme.dart';
 
 /// Sesión guiada: series por ejercicio, temporizador de descanso, sugerencia
 /// de carga y botón de alarma.
@@ -309,8 +310,9 @@ class _WorkoutPageState extends State<WorkoutPage> {
               ),
             ),
           if (_done.length >= _p.sets && _current < _planned.length - 1)
-            FilledButton.tonal(
+            FilledButton(
               key: const Key('next-exercise'),
+              style: ZerackTheme.accentStyle,
               onPressed: () => _goTo(_current + 1),
               child: const Text('Siguiente ejercicio'),
             ),

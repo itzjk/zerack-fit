@@ -118,7 +118,13 @@ Future<AppState> pumpApp(
   t.view.devicePixelRatio = 2.5;
   addTearDown(t.view.reset);
   final s = state ?? newState();
-  await t.pumpWidget(ZerackApp(state: s, services: services ?? fakeServices()));
+  await t.pumpWidget(
+    ZerackApp(
+      state: s,
+      services: services ?? fakeServices(),
+      animatedBackdrop: false,
+    ),
+  );
   await t.pumpAndSettle();
   return s;
 }

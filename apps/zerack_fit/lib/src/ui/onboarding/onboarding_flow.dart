@@ -4,6 +4,8 @@ import 'package:zerack_core/zerack_core.dart';
 import '../profile/profile_form.dart';
 import '../scope.dart';
 import '../strings.dart';
+import '../theme/zk_widgets.dart';
+import '../theme/zerack_theme.dart';
 
 /// Aviso → perfil → screening. Cada paso se guarda al confirmar, así que si la
 /// app se cierra a medias se retoma donde iba.
@@ -43,11 +45,11 @@ class _DisclaimerStepState extends State<_DisclaimerStep> {
           padding: const EdgeInsets.all(24),
           children: [
             const SizedBox(height: 24),
-            Text('ZERACK Fit', style: text.displaySmall),
-            const SizedBox(height: 8),
+            const ZkWordmark(suffix: 'Fit'),
+            const SizedBox(height: 28),
             Text(
               'Entrenamiento que se adapta a tu salud.',
-              style: text.titleMedium,
+              style: text.headlineMedium,
             ),
             const SizedBox(height: 32),
             Text(Es.disclaimer, style: text.bodyLarge),
@@ -175,7 +177,8 @@ class _ScreeningStepState extends State<ScreeningStep> {
               ? Icons.check_circle_outline
               : Icons.medical_services_outlined,
           size: 64,
-          color: Theme.of(context).colorScheme.primary,
+          color: Zk.cyan,
+          shadows: Zk.glowCyan,
         ),
         const SizedBox(height: 16),
         Text(Es.outcomeTitle(outcome), style: text.headlineSmall),

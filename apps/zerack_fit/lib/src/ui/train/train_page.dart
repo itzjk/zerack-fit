@@ -5,6 +5,7 @@ import 'package:zerack_core/zerack_core.dart';
 import '../scope.dart';
 import '../strings.dart';
 import 'workout_page.dart';
+import '../theme/zk_widgets.dart';
 
 class TrainPage extends StatelessWidget {
   const TrainPage({super.key});
@@ -21,7 +22,7 @@ class TrainPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Entrenar', style: text.headlineSmall),
+        const ZkPageTitle('Entrenar', eyebrow: 'Plan'),
         if (!screening.outcome.allowsVigorous)
           const Padding(
             padding: EdgeInsets.only(top: 8),
@@ -82,8 +83,7 @@ class TrainPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text('Ejercicios sueltos', style: text.titleMedium),
+        const ZkSectionLabel('Ejercicios sueltos'),
         for (final e in exerciseCatalog)
           Card(
             child: ListTile(
@@ -119,7 +119,7 @@ class _ClearanceGate extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Icon(Icons.medical_services_outlined, size: 64),
+        const ZkHeroIcon(Icons.medical_services_outlined),
         const SizedBox(height: 16),
         Text(Es.outcomeTitle(outcome), style: text.headlineSmall),
         const SizedBox(height: 12),

@@ -1,5 +1,13 @@
 # Cambios
 
+## Sin publicar
+
+- **Interfaz nueva en blanco y negro neón**, de la misma familia que el resto de
+  ZERACK: fondo negro con rejilla fina y estrellas que derivan, texto blanco,
+  acentos en cian, bordes de un píxel y tipografía Space Grotesk incluida en la
+  app. Todas las pantallas rediseñadas, sin quitar funciones. En pantallas
+  anchas el contenido se centra en una columna.
+
 ## 0.2.0 — 2026-10-07
 
 - **Escaneo de platos con IA.** Foto → la IA identifica alimentos y estima

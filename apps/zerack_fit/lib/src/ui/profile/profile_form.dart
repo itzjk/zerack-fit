@@ -108,6 +108,7 @@ class _ProfileFormState extends State<ProfileForm> {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: _range(18, 100, 'años'),
           ),
+          const SizedBox(height: 16),
           TextFormField(
             key: const Key('profile-weight'),
             controller: _weight,
@@ -116,6 +117,7 @@ class _ProfileFormState extends State<ProfileForm> {
             inputFormatters: numeric,
             validator: _range(25, 350, 'kg'),
           ),
+          const SizedBox(height: 16),
           TextFormField(
             key: const Key('profile-height'),
             controller: _height,
