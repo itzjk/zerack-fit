@@ -143,3 +143,14 @@ Future<void> openTab(WidgetTester t, String label) async {
   );
   await t.pumpAndSettle();
 }
+
+/// Como [tapKey], para pantallas con animación continua (no "se asientan").
+Future<void> tapKeyAnimated(WidgetTester t, String key) async {
+  final f = find.byKey(Key(key));
+  await t.ensureVisible(f);
+  await t.pump();
+  await t.tap(f);
+  for (var i = 0; i < 10; i++) {
+    await t.pump(const Duration(milliseconds: 100));
+  }
+}

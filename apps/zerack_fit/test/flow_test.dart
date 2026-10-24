@@ -24,6 +24,9 @@ Future<void> _yesNo(WidgetTester t, String prefix, {required bool yes}) async {
   await t.pumpAndSettle();
 }
 
+/// 2026-10-19 es lunes: día de entreno en todos los planes.
+DateTime _monday() => DateTime(2026, 10, 19, 9);
+
 void _push(WidgetTester t, Widget page) {
   t
       .state<NavigatorState>(find.byType(Navigator).first)
@@ -80,7 +83,11 @@ void main() {
   testWidgets('enfermedad sin ejercicio regular bloquea Entrenar', (t) async {
     final s = await pumpApp(
       t,
-      state: await onboardedState(exercises: false, disease: true),
+      state: await onboardedState(
+        exercises: false,
+        disease: true,
+        clock: _monday,
+      ),
     );
     await openTab(t, 'Entrenar');
     expect(find.text('Habla con tu médico antes de empezar'), findsOneWidget);
@@ -252,9 +259,10 @@ void main() {
   });
 
   testWidgets('entrenamiento del plan: series, descanso y terminar', (t) async {
-    final s = await pumpApp(t, state: await onboardedState());
+    final s = await pumpApp(t, state: await onboardedState(clock: _monday));
     await openTab(t, 'Entrenar');
-    expect(find.text('Toca hoy: Cuerpo completo A'), findsOneWidget);
+    expect(find.byKey(const Key('day-workout')), findsOneWidget);
+    expect(find.text('Tren superior'), findsNothing);
     await tapKey(t, 'workout-start');
     await t.enterText(find.byKey(const Key('set-load')), '60');
     await t.enterText(find.byKey(const Key('set-reps')), '10');
@@ -264,20 +272,28 @@ void main() {
     await tapKey(t, 'session-finish');
     expect(s.workouts.single.templateId, 'A');
     expect(s.sessionsFor('back_squat'), hasLength(1));
-    expect(find.text('Toca hoy: Cuerpo completo B'), findsOneWidget);
+    expect(s.workouts.single.minutes, greaterThan(0));
   });
 
   testWidgets('"Me siento mal" con un signo detiene la sesión', (t) async {
     final s = await pumpApp(t, state: await onboardedState());
     await openTab(t, 'Entrenar');
-    await tapKey(t, 'exercise-back_squat');
+    await tapKeyAnimated(t, 'exercise-back_squat');
+    await tapKeyAnimated(t, 'exercise-log');
     await tapKey(t, 'feel-bad');
     await tapKey(t, 'feel-${WarningSign.dizzinessOrSyncope.name}');
     await tapKey(t, 'feel-submit');
     expect(find.byKey(const Key('stop-dialog')), findsOneWidget);
     await t.tap(find.text('Entendido'));
-    await t.pumpAndSettle();
+    for (var i = 0; i < 10; i++) {
+      await t.pump(const Duration(milliseconds: 100));
+    }
     expect(find.byType(WorkoutPage), findsNothing, reason: 'cerró la sesión');
+    expect(
+      find.byKey(const Key('exercise-animation')),
+      findsOneWidget,
+      reason: 'regresa a la guía del ejercicio',
+    );
     expect(s.sessionsFor('back_squat'), isEmpty);
   });
 
@@ -323,4 +339,50 @@ void main() {
     await tapKey(t, 'checkin-save');
     expect(find.text('50'), findsOneWidget);
   });
+
+  testWidgets('plan semanal: tocar un día y un ejercicio lo muestra animado', (
+    t,
+  ) async {
+    final state = await onboardedState(clock: _monday);
+    await state.saveSettings(
+      state.settings.copyWith(level: TrainingLevel.advanced, daysPerWeek: 6),
+    );
+    await pumpApp(t, state: state);
+    await openTab(t, 'Entrenar');
+
+    // Lunes (hoy) toca empuje; domingo descansa.
+    expect(find.text('Empuje (pecho, hombro, tríceps)'), findsOneWidget);
+    await tapKey(t, 'day-7');
+    expect(find.byKey(const Key('day-rest')), findsOneWidget);
+
+    await tapKey(t, 'day-1');
+    await tapKeyAnimated(t, 'plan-exercise-bench_press');
+    expect(find.byKey(const Key('exercise-animation')), findsOneWidget);
+    expect(find.byType(CustomPaint), findsWidgets);
+    expect(find.text('Press de banca'), findsWidgets);
+    expect(find.text('CÓMO SE HACE'), findsOneWidget);
+    expect(find.byKey(const Key('exercise-prescription')), findsOneWidget);
+
+    // La animación corre y no truena al avanzar el tiempo.
+    await t.pump(const Duration(milliseconds: 900));
+    await t.pump(const Duration(milliseconds: 900));
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets(
+    'el nivel avanzado se bloquea si el screening limita a moderado',
+    (t) async {
+      final st = await onboardedState(disease: true, clock: _monday);
+      await pumpApp(t, state: st);
+      await openTab(t, 'Perfil');
+      final advanced = find.descendant(
+        of: find.byKey(const Key('level-choice')),
+        matching: find.text('Avanzado'),
+      );
+      await t.ensureVisible(advanced);
+      await t.tap(advanced);
+      await t.pumpAndSettle();
+      expect(st.settings.level, isNot(TrainingLevel.advanced));
+    },
+  );
 }

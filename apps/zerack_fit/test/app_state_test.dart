@@ -120,32 +120,39 @@ void main() {
     expect(s.proteinRange!.minG, closeTo(98, 1e-9));
   });
 
-  test('rechaza días de entreno fuera de 2–3', () async {
+  test('los días de entreno respetan el rango del nivel (ACSM 2009)', () async {
     final s = newState();
-    expect(
-      () => s.saveSettings(s.settings.copyWith(daysPerWeek: 5)),
-      throwsRangeError,
+    await s.saveSettings(s.settings.copyWith(daysPerWeek: 5));
+    expect(s.settings.daysPerWeek, 3, reason: 'principiante: 2–3');
+    await s.saveSettings(
+      s.settings.copyWith(level: TrainingLevel.advanced, daysPerWeek: 6),
     );
+    expect(s.plan.daysPerWeek, 6);
   });
 
-  test('el plan alterna A y B al terminar entrenos del plan', () async {
-    final s = await onboardedState();
-    expect(s.nextWorkout.id, 'A');
-    await s.logWorkout(
-      setsByExercise: {
-        'back_squat': const [LoggedSet(loadKg: 60, reps: 10)],
-      },
-      minutes: 40,
-      templateId: 'A',
+  test('si el nivel baja, el plan ajusta los días al nuevo rango', () async {
+    final s = newState();
+    await s.saveSettings(
+      s.settings.copyWith(level: TrainingLevel.advanced, daysPerWeek: 6),
     );
-    expect(s.nextWorkout.id, 'B');
-    await s.logWorkout(
-      setsByExercise: {
-        'dumbbell_curl': const [LoggedSet(loadKg: 10, reps: 10)],
-      },
-      minutes: 10,
-    );
-    expect(s.nextWorkout.id, 'B', reason: 'un ejercicio suelto no cuenta');
+    await s.saveSettings(s.settings.copyWith(level: TrainingLevel.novice));
+    expect(s.settings.daysPerWeek, 3);
+    expect(s.plan.daysPerWeek, 3);
+  });
+
+  test('la sesión de hoy sale del día de la semana', () async {
+    // 2026-10-19 es lunes.
+    var day = DateTime(2026, 10, 19, 8);
+    final s = await onboardedState(exercises: false, clock: () => day);
+    expect(s.settings.level, TrainingLevel.novice);
+    expect(s.todayWorkout!.id, 'A', reason: 'lunes');
+    day = DateTime(2026, 10, 20, 8);
+    expect(s.todayWorkout, isNull, reason: 'martes descansa');
+    expect(s.nextWorkout.weekday, 3);
+    expect(s.nextWorkout.workout.id, 'B');
+    day = DateTime(2026, 10, 25, 8);
+    expect(s.todayWorkout, isNull, reason: 'domingo descansa');
+    expect(s.nextWorkout.weekday, 1, reason: 'da la vuelta a la semana');
   });
 
   test('logWorkout sin series es un error', () {

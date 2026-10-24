@@ -107,6 +107,7 @@ abstract final class Es {
   static String level(TrainingLevel l) => switch (l) {
     TrainingLevel.novice => 'Principiante',
     TrainingLevel.intermediate => 'Intermedio',
+    TrainingLevel.advanced => 'Avanzado',
   };
 
   static String intensity(ActivityIntensity i) => switch (i) {
@@ -123,5 +124,17 @@ abstract final class Es {
     PulseFailure.poorSignal =>
       'La señal salió irregular. Quédate quieto, sin presionar fuerte, y '
           'vuelve a intentar.',
+  };
+
+  /// Nombre de una sesión del plan por su id (los registros guardan el id).
+  static String workoutName(String id) => switch (id) {
+    'A' => 'Cuerpo completo A',
+    'B' => 'Cuerpo completo B',
+    'upper' => 'Tren superior',
+    'lower' => 'Tren inferior',
+    'push' => 'Empuje',
+    'pull' => 'Jalón',
+    'legs' => 'Piernas',
+    _ => 'Entrenamiento',
   };
 }

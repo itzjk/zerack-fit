@@ -114,6 +114,7 @@ class _GoalsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final s = state.settings;
+    final vigorousOk = state.screening?.outcome.allowsVigorous ?? false;
     final text = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,22 +142,43 @@ class _GoalsSection extends StatelessWidget {
           key: const Key('level-choice'),
           segments: [
             for (final l in TrainingLevel.values)
-              ButtonSegment(value: l, label: Text(Es.level(l))),
+              ButtonSegment(
+                value: l,
+                label: Text(Es.level(l)),
+                // Más días y volumen: solo si el screening permite intensidad
+                // vigorosa sin autorización médica.
+                enabled: l != TrainingLevel.advanced || vigorousOk,
+              ),
           ],
           selected: {s.level},
-          onSelectionChanged: (v) =>
-              state.saveSettings(s.copyWith(level: v.first)),
+          onSelectionChanged: (v) => state.saveSettings(
+            s.copyWith(
+              level: v.first,
+              daysPerWeek: v.first.clampDays(s.daysPerWeek),
+            ),
+          ),
         ),
+        if (!vigorousOk)
+          Text(
+            'El nivel avanzado se activa cuando tu cuestionario de seguridad '
+            'permite intensidad vigorosa.',
+            style: text.bodySmall,
+          ),
         const SizedBox(height: 12),
         SegmentedButton<int>(
           key: const Key('days-choice'),
-          segments: const [
-            ButtonSegment(value: 2, label: Text('2 días')),
-            ButtonSegment(value: 3, label: Text('3 días')),
+          segments: [
+            for (var d = s.level.minDays; d <= s.level.maxDays; d++)
+              ButtonSegment(value: d, label: Text('$d días')),
           ],
-          selected: {s.daysPerWeek},
+          selected: {s.level.clampDays(s.daysPerWeek)},
           onSelectionChanged: (v) =>
               state.saveSettings(s.copyWith(daysPerWeek: v.first)),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'ACSM 2009: principiante 2–3 días, intermedio 3–4, avanzado 4–6.',
+          style: text.bodySmall,
         ),
         SwitchListTile(
           key: const Key('gym-switch'),

@@ -228,7 +228,7 @@ Límites (no negociables):
     final eaten = s.todayNutrients;
     final week = s.weekSummary;
     final screening = s.screening;
-    final next = s.nextWorkout;
+    final plan = s.plan;
     final history30 = s.thirtyDaySummary();
     return {
       'fecha': s.today,
@@ -268,11 +268,21 @@ Límites (no negociables):
           'puede_entrenar': screening.canTrain,
           'vigoroso_permitido': screening.outcome.allowsVigorous,
         },
-      'proximo_entreno': {
-        'nombre': next.name,
-        'ejercicios': [
-          for (final e in next.exercises)
-            '${e.exercise.name}: ${e.sets}x${e.minReps}-${e.maxReps}',
+      'plan_semanal': {
+        'nivel': plan.level.name,
+        'dias_por_semana': plan.daysPerWeek,
+        'hoy': weekdayNamesEs[s.now.weekday - 1],
+        'dias': [
+          for (final d in plan.week)
+            {
+              'dia': weekdayNamesEs[d.weekday - 1],
+              'sesion': d.workout?.name ?? 'Descanso',
+              if (d.workout != null)
+                'ejercicios': [
+                  for (final e in d.workout!.exercises)
+                    '${e.exercise.name}: ${e.sets}x${e.minReps}-${e.maxReps}',
+                ],
+            },
         ],
       },
       'historial_30_dias': ?history30,

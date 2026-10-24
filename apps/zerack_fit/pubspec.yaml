@@ -29,6 +29,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/foods_es.json
+    - assets/exercise_motion.json
     - assets/legal/
   fonts:
     - family: SpaceGrotesk

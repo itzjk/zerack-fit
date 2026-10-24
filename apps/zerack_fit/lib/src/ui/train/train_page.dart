@@ -4,11 +4,27 @@ import 'package:zerack_core/zerack_core.dart';
 
 import '../scope.dart';
 import '../strings.dart';
+import '../../data/models.dart' show weekdayNamesEs;
+import '../theme/zerack_theme.dart';
+import 'exercise_detail_page.dart';
 import 'workout_page.dart';
 import '../theme/zk_widgets.dart';
 
-class TrainPage extends StatelessWidget {
+class TrainPage extends StatefulWidget {
   const TrainPage({super.key});
+
+  @override
+  State<TrainPage> createState() => _TrainPageState();
+}
+
+class _TrainPageState extends State<TrainPage> {
+  /// Día elegido (1 = lunes). `null` = hoy.
+  int? _selected;
+
+  static const _short = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+  void _open(Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
 
   @override
   Widget build(BuildContext context) {
@@ -16,13 +32,20 @@ class TrainPage extends StatelessWidget {
     final screening = state.screening!;
     if (!screening.canTrain) return const _ClearanceGate();
 
-    final next = state.nextWorkout;
     final plan = state.plan;
+    final today = state.now.weekday;
+    final day = _selected ?? today;
+    final workout = plan.forWeekday(day);
     final text = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const ZkPageTitle('Entrenar', eyebrow: 'Plan'),
+        const ZkPageTitle('Entrenar', eyebrow: 'Plan semanal'),
+        Text(
+          '${Es.level(plan.level)} · ${plan.daysPerWeek} días por semana'
+          '${state.settings.gymAccess ? ' · gimnasio' : ' · en casa'}',
+          style: text.bodyMedium,
+        ),
         if (!screening.outcome.allowsVigorous)
           const Padding(
             padding: EdgeInsets.only(top: 8),
@@ -31,40 +54,88 @@ class TrainPage extends StatelessWidget {
               'mientras haces la serie.',
             ),
           ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            for (final d in plan.week)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: _DayChip(
+                    key: Key('day-${d.weekday}'),
+                    letter: _short[d.weekday - 1],
+                    training: d.workout != null,
+                    selected: d.weekday == day,
+                    today: d.weekday == today,
+                    onTap: () => setState(() => _selected = d.weekday),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Toca hoy: ${next.name}', style: text.titleLarge),
                 Text(
-                  '${Es.level(plan.level)} · ${plan.daysPerWeek} días por '
-                  'semana · ${next.exercises.length} ejercicios',
-                ),
-                const SizedBox(height: 8),
-                for (final e in next.exercises)
-                  Text(
-                    '• ${e.exercise.name}: ${e.sets} × '
-                    '${e.minReps}–${e.maxReps}',
-                  ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  key: const Key('workout-start'),
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Empezar entrenamiento'),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => WorkoutPage(template: next),
-                    ),
-                  ),
+                  '${weekdayNamesEs[day - 1]}${day == today ? ' (hoy)' : ''}',
+                  style: text.labelLarge,
                 ),
                 const SizedBox(height: 4),
+                if (workout == null) ...[
+                  Text(
+                    'Descanso',
+                    key: const Key('day-rest'),
+                    style: text.titleLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Recuperarte también es parte del plan. Próximo '
+                    'entreno: ${weekdayNamesEs[plan.nextFrom(day % 7 + 1).weekday - 1].toLowerCase()}.',
+                  ),
+                ] else ...[
+                  Text(
+                    workout.name,
+                    key: const Key('day-workout'),
+                    style: text.titleLarge,
+                  ),
+                  Text(
+                    '${workout.exercises.length} ejercicios · toca uno para '
+                    'verlo en movimiento',
+                    style: text.bodySmall,
+                  ),
+                  const SizedBox(height: 4),
+                  for (final e in workout.exercises)
+                    ListTile(
+                      key: Key('plan-exercise-${e.exercise.id}'),
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.play_circle_outline),
+                      title: Text(e.exercise.name),
+                      subtitle: Text(
+                        '${e.sets} × ${e.minReps}–${e.maxReps}'
+                        '${e.exercise.id == 'plank' ? ' s' : ''}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _open(
+                        ExerciseDetailPage(exercise: e.exercise, planned: e),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    key: const Key('workout-start'),
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Empezar entrenamiento'),
+                    onPressed: () => _open(WorkoutPage(template: workout)),
+                  ),
+                ],
+                const SizedBox(height: 8),
                 Text(
-                  'Plan de cuerpo completo según ACSM: 8–12 repeticiones, '
-                  'descanso de 2 min en ejercicios grandes y 1 min en los '
-                  'chicos, 48 h entre sesiones del mismo músculo.',
+                  'Plan según ACSM: días por semana según tu nivel, 8–12 '
+                  'repeticiones y 48 h o más antes de repetir el mismo '
+                  'músculo. Cambia nivel y días en Perfil.',
                   style: text.bodySmall,
                 ),
               ],
@@ -83,7 +154,7 @@ class TrainPage extends StatelessWidget {
             ),
           ),
         ),
-        const ZkSectionLabel('Ejercicios sueltos'),
+        const ZkSectionLabel('Todos los ejercicios'),
         for (final e in exerciseCatalog)
           Card(
             child: ListTile(
@@ -91,11 +162,7 @@ class TrainPage extends StatelessWidget {
               title: Text(e.name),
               subtitle: Text(_subtitle(state.suggestionFor(e), e)),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => WorkoutPage.single(exercise: e),
-                ),
-              ),
+              onTap: () => _open(ExerciseDetailPage(exercise: e)),
             ),
           ),
       ],
@@ -105,6 +172,60 @@ class TrainPage extends StatelessWidget {
   static String _subtitle(ProgressionDecision? d, Exercise e) {
     if (e.bodyweight) return 'Peso corporal: suma repeticiones';
     return d == null ? 'Objetivo: 8–12 repeticiones' : Es.progression(d);
+  }
+}
+
+class _DayChip extends StatelessWidget {
+  const _DayChip({
+    super.key,
+    required this.letter,
+    required this.training,
+    required this.selected,
+    required this.today,
+    required this.onTap,
+  });
+
+  final String letter;
+  final bool training;
+  final bool selected;
+  final bool today;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? Zk.cyanSoft : Zk.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: selected ? Zk.cyan : (today ? Zk.cyanLine : Zk.hairlineStrong),
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            children: [
+              Text(
+                letter,
+                style: TextStyle(
+                  color: selected ? Zk.cyanBright : Zk.text,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Icon(
+                training ? Icons.fitness_center : Icons.bedtime_outlined,
+                size: 14,
+                color: training ? Zk.cyan : Zk.faint,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

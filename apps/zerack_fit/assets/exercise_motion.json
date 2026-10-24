@@ -1,0 +1,98 @@
+{
+  "_doc": "Poses de cada ejercicio, vista de perfil, lienzo 100x100, piso en y=95. Ángulos absolutos en grados: 0 = arriba, 90 = adelante (derecha), 180 = abajo, -90 = atrás. root 'ankle': la cadena sube tobillo→rodilla→cadera; root 'hip': baja cadera→rodilla→tobillo. Brazos siempre desde el hombro. La animación va y viene entre frames[0] y frames[1].",
+  "back_squat": {
+    "root": "ankle", "at": [50, 95], "props": ["barbell"],
+    "frames": [
+      {"shin": 0, "thigh": 0, "torso": 0, "upper": -160, "fore": 10},
+      {"shin": 35, "thigh": -78, "torso": 42, "upper": -118, "fore": 52}
+    ]
+  },
+  "goblet_squat": {
+    "root": "ankle", "at": [50, 95], "props": ["dumbbell"],
+    "frames": [
+      {"shin": 0, "thigh": 0, "torso": 0, "upper": 175, "fore": 25},
+      {"shin": 32, "thigh": -80, "torso": 30, "upper": 165, "fore": 55}
+    ]
+  },
+  "leg_press": {
+    "root": "hip", "at": [36, 72], "props": ["sled", "platform"],
+    "frames": [
+      {"thigh": 62, "shin": 62, "torso": -55, "upper": 150, "fore": 150},
+      {"thigh": 18, "shin": 120, "torso": -55, "upper": 150, "fore": 150}
+    ]
+  },
+  "romanian_deadlift": {
+    "root": "ankle", "at": [50, 95], "props": ["barbell"],
+    "frames": [
+      {"shin": 0, "thigh": 0, "torso": 0, "upper": 180, "fore": 180},
+      {"shin": 8, "thigh": -22, "torso": 78, "upper": 182, "fore": 182}
+    ]
+  },
+  "bench_press": {
+    "root": "hip", "at": [62, 70], "props": ["barbell", "bench"],
+    "bench": [22, 72, 70, 76],
+    "frames": [
+      {"thigh": 80, "shin": 175, "torso": -90, "upper": 8, "fore": 4},
+      {"thigh": 80, "shin": 175, "torso": -90, "upper": 150, "fore": 12}
+    ]
+  },
+  "pushup": {
+    "root": "ankle", "at": [10, 94], "props": [],
+    "frames": [
+      {"shin": 68, "thigh": 68, "torso": 68, "upper": 178, "fore": 178},
+      {"shin": 80, "thigh": 80, "torso": 80, "upper": -150, "fore": 160}
+    ]
+  },
+  "lat_pulldown": {
+    "root": "hip", "at": [46, 66], "props": ["barbell", "seat", "cable"],
+    "anchor": [56, 4],
+    "frames": [
+      {"thigh": 92, "shin": 180, "torso": -6, "upper": 8, "fore": 6},
+      {"thigh": 92, "shin": 180, "torso": -14, "upper": 150, "fore": 25}
+    ]
+  },
+  "barbell_row": {
+    "root": "ankle", "at": [50, 95], "props": ["barbell"],
+    "frames": [
+      {"shin": 10, "thigh": -25, "torso": 72, "upper": 180, "fore": 180},
+      {"shin": 10, "thigh": -25, "torso": 72, "upper": -118, "fore": 178}
+    ]
+  },
+  "seated_row": {
+    "root": "hip", "at": [30, 80], "props": ["handle", "cable", "seat"],
+    "anchor": [96, 80],
+    "frames": [
+      {"thigh": 82, "shin": 100, "torso": 10, "upper": 95, "fore": 92},
+      {"thigh": 82, "shin": 100, "torso": -8, "upper": -150, "fore": 92}
+    ]
+  },
+  "overhead_press": {
+    "root": "ankle", "at": [50, 95], "props": ["barbell"],
+    "frames": [
+      {"shin": 0, "thigh": 0, "torso": 0, "upper": 162, "fore": 8},
+      {"shin": 0, "thigh": 0, "torso": -3, "upper": 4, "fore": 2}
+    ]
+  },
+  "dumbbell_curl": {
+    "root": "ankle", "at": [50, 95], "props": ["dumbbell"],
+    "frames": [
+      {"shin": 0, "thigh": 0, "torso": 0, "upper": 178, "fore": 175},
+      {"shin": 0, "thigh": 0, "torso": 0, "upper": 172, "fore": 30}
+    ]
+  },
+  "triceps_pushdown": {
+    "root": "ankle", "at": [44, 95], "props": ["handle", "cable"],
+    "anchor": [60, 4],
+    "frames": [
+      {"shin": 0, "thigh": 0, "torso": 8, "upper": 172, "fore": 70},
+      {"shin": 0, "thigh": 0, "torso": 8, "upper": 172, "fore": 175}
+    ]
+  },
+  "plank": {
+    "root": "ankle", "at": [16, 94], "props": [],
+    "frames": [
+      {"shin": 76, "thigh": 76, "torso": 76, "upper": 180, "fore": 90},
+      {"shin": 77, "thigh": 77, "torso": 77, "upper": 179, "fore": 90}
+    ]
+  }
+}

@@ -43,7 +43,7 @@ class ProgressPage extends StatelessWidget {
                       title: Text(
                         w.templateId == null
                             ? 'Ejercicio suelto'
-                            : 'Cuerpo completo ${w.templateId}',
+                            : Es.workoutName(w.templateId!),
                       ),
                       subtitle: Text('${w.day} · ${w.minutes} min'),
                     ),

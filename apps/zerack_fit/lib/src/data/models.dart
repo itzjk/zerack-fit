@@ -7,6 +7,17 @@ String dayKey(DateTime t) =>
     '${t.month.toString().padLeft(2, '0')}-'
     '${t.day.toString().padLeft(2, '0')}';
 
+/// Nombres de los días, índice 0 = lunes (DateTime.weekday − 1).
+const weekdayNamesEs = [
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+  'Domingo',
+];
+
 DateTime parseDayKey(String key) {
   final p = key.split('-').map(int.parse).toList();
   return DateTime(p[0], p[1], p[2]);

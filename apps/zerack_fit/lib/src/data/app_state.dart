@@ -85,14 +85,20 @@ class AppState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- entreno
 
-  TrainingPlan get plan => buildFullBodyPlan(
+  /// Plan semanal. Los días se ajustan al rango del nivel (ACSM 2009) por si
+  /// el nivel cambió después de elegirlos.
+  TrainingPlan get plan => buildWeeklyPlan(
     level: _settings.level,
-    daysPerWeek: _settings.daysPerWeek,
+    daysPerWeek: _settings.level.clampDays(_settings.daysPerWeek),
     gymAccess: _settings.gymAccess,
   );
 
-  WorkoutTemplate get nextWorkout =>
-      plan.next(_workouts.where((w) => w.templateId != null).length);
+  /// Sesión de hoy según el día de la semana, o `null` si hoy es descanso.
+  WorkoutTemplate? get todayWorkout => plan.forWeekday(_clock().weekday);
+
+  /// Próximo entreno a partir de hoy (incluido).
+  ({int weekday, WorkoutTemplate workout}) get nextWorkout =>
+      plan.nextFrom(_clock().weekday);
 
   /// Sesiones de un ejercicio, de la más vieja a la más nueva.
   List<SessionRecord> sessionsFor(String exerciseId) =>
@@ -366,10 +372,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> saveSettings(Settings s) {
-    if (s.daysPerWeek < 2 || s.daysPerWeek > 3) {
-      throw RangeError.range(s.daysPerWeek, 2, 3, 'daysPerWeek');
-    }
-    _settings = s;
+    // Los días siempre quedan dentro del rango del nivel (ACSM 2009).
+    _settings = s.copyWith(daysPerWeek: s.level.clampDays(s.daysPerWeek));
     return _save();
   }
 

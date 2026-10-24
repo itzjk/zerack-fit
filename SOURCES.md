@@ -17,7 +17,7 @@ con su identificador estable y se muestra en la app (Perfil → Fuentes).
 | Screening previo | Algoritmo de autorización médica | Riebe et al., *Med Sci Sports Exerc* 2015;47(11):2473-2479 |
 | Signos de alarma | Lista de signos y síntomas | Riebe et al. 2015, tabla 1 |
 | Progresión de cargas | Regla 2-de-más en 2 sesiones, +2–10 % | ACSM Position Stand, *Med Sci Sports Exerc* 2009;41(3):687-708 |
-| Plan de fuerza | 2–3 días, 8–12 reps, series y descansos | ACSM 2009 y Garber et al., *Med Sci Sports Exerc* 2011;43(7):1334-1359 |
+| Plan semanal | Días por nivel (principiante 2–3, intermedio 3–4, avanzado 4–6), rutinas divididas a partir de 4 días, 8–12 reps, series y descansos, ≥48 h antes de repetir músculo | ACSM 2009 y Garber et al., *Med Sci Sports Exerc* 2011;43(7):1334-1359 |
 | Actividad semanal | 150–300 min moderados, vigorosos ×2, fuerza 2+ días | Bull et al. (OMS 2020), *Br J Sports Med* 2020;54(24):1451-1462 |
 | Pulso máximo | 208 − 0.7 × edad | Tanaka et al., *J Am Coll Cardiol* 2001;37(1):153-156 |
 | Bandas de intensidad | % de frecuencia cardiaca de reserva | ACSM's Guidelines for Exercise Testing and Prescription, 11.ª ed. |
@@ -31,6 +31,12 @@ con su identificador estable y se muestra en la app (Perfil → Fuentes).
   (2 min en multiarticulares, 60 s en monoarticulares).
 - **Nivel inicial:** quien ya entrena con regularidad (respuesta del screening)
   empieza en "intermedio" (3 series); quien no, en "principiante" (2 series).
+
+- **Nivel avanzado:** solo se puede elegir si el cuestionario de seguridad
+  permite intensidad vigorosa sin autorización médica.
+- **Animaciones de ejercicios:** dibujadas por el proyecto (figura de líneas en
+  `assets/exercise_motion.json`), ilustrativas. Sin videos ni imágenes de
+  terceros.
 
 ## Lo que todavía NO tiene fuente (y por eso no está)
 
