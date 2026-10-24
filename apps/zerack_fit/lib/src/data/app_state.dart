@@ -236,10 +236,10 @@ class AppState extends ChangeNotifier {
           ),
       },
       if (workoutMinByDay.isNotEmpty)
-        'minutos_entreno_promedio_por_dia_activo': (workoutMinByDay.values
-                    .fold<int>(0, (a, b) => a + b) /
-                workoutMinByDay.length)
-            .round(),
+        'minutos_entreno_promedio_por_dia_activo':
+            (workoutMinByDay.values.fold<int>(0, (a, b) => a + b) /
+                    workoutMinByDay.length)
+                .round(),
       if (hooperVals.isNotEmpty)
         'hooper_promedio_0_100':
             (hooperVals.reduce((a, b) => a + b) / hooperVals.length).round(),

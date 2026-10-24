@@ -275,7 +275,7 @@ Límites (no negociables):
             '${e.exercise.name}: ${e.sets}x${e.minReps}-${e.maxReps}',
         ],
       },
-      if (history30 != null) 'historial_30_dias': history30,
+      'historial_30_dias': ?history30,
     };
   }
 
