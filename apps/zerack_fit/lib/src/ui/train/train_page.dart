@@ -8,6 +8,7 @@ import '../../data/models.dart' show weekdayNamesEs;
 import '../theme/zerack_theme.dart';
 import 'exercise_detail_page.dart';
 import 'workout_page.dart';
+import 'workout_draft_card.dart';
 import '../theme/zk_widgets.dart';
 
 class TrainPage extends StatefulWidget {
@@ -41,6 +42,7 @@ class _TrainPageState extends State<TrainPage> {
       padding: const EdgeInsets.all(16),
       children: [
         const ZkPageTitle('Entrenar', eyebrow: 'Plan semanal'),
+        const WorkoutDraftCard(),
         Text(
           '${Es.level(plan.level)} · ${plan.daysPerWeek} días por semana'
           '${state.settings.gymAccess ? ' · gimnasio' : ' · en casa'}',
@@ -127,7 +129,11 @@ class _TrainPageState extends State<TrainPage> {
                   FilledButton.icon(
                     key: const Key('workout-start'),
                     icon: const Icon(Icons.play_arrow),
-                    label: const Text('Empezar entrenamiento'),
+                    label: Text(
+                      state.workoutDraft == null
+                          ? 'Empezar entrenamiento'
+                          : 'Resume workout',
+                    ),
                     onPressed: () => _open(WorkoutPage(template: workout)),
                   ),
                 ],

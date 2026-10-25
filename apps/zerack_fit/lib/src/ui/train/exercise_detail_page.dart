@@ -89,7 +89,11 @@ class ExerciseDetailPage extends StatelessWidget {
           FilledButton.icon(
             key: const Key('exercise-log'),
             icon: const Icon(Icons.edit_note),
-            label: const Text('Registrar series'),
+            label: Text(
+              AppScope.of(context).workoutDraft == null
+                  ? 'Registrar series'
+                  : 'Resume workout',
+            ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => WorkoutPage.single(exercise: exercise),

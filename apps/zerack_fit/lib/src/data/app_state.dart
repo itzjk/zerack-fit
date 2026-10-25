@@ -5,6 +5,7 @@ import 'package:zerack_core/zerack_core.dart';
 
 import 'models.dart';
 import 'store.dart';
+import 'workout_draft.dart';
 
 /// Estado completo de la app. Se guarda como un único JSON versionado en el
 /// almacenamiento local; nada sale del dispositivo desde aquí.
@@ -33,6 +34,10 @@ class AppState extends ChangeNotifier {
   final List<ActivityLog> _activities = [];
   final List<WeightEntry> _weights = [];
   final List<PulseReading> _pulses = [];
+  WorkoutDraft? _workoutDraft;
+  bool _writingWorkout = false;
+
+  WorkoutDraft? get workoutDraft => _workoutDraft;
 
   bool get disclaimerAccepted => _disclaimerAccepted;
   UserProfile? get profile => _profile;
@@ -290,6 +295,10 @@ class AppState extends ChangeNotifier {
     _replace(_activities, j['activities'], ActivityLog.fromJson);
     _replace(_weights, j['weights'], WeightEntry.fromJson);
     _replace(_pulses, j['pulses'], PulseReading.fromJson);
+    final draft = j['workoutDraft'];
+    _workoutDraft = draft == null
+        ? null
+        : WorkoutDraft.fromJson(draft as Map<String, Object?>);
   }
 
   static void _replace<T>(
@@ -318,7 +327,81 @@ class AppState extends ChangeNotifier {
     'activities': [for (final a in _activities) a.toJson()],
     'weights': [for (final w in _weights) w.toJson()],
     'pulses': [for (final p in _pulses) p.toJson()],
+    'workoutDraft': _workoutDraft?.toJson(),
   };
+
+  Future<void> saveWorkoutDraft(WorkoutDraft draft) async {
+    if (_writingWorkout) throw StateError('Workout save in progress');
+    if (_workoutDraft != null && _workoutDraft!.startedAt != draft.startedAt) {
+      throw StateError('Resume or discard the current workout first');
+    }
+    _writingWorkout = true;
+    try {
+      await _store.write(
+        storageKey,
+        jsonEncode({..._toJson(), 'workoutDraft': draft.toJson()}),
+      );
+      _workoutDraft = draft;
+      notifyListeners();
+    } finally {
+      _writingWorkout = false;
+    }
+  }
+
+  Future<void> discardWorkoutDraft() async {
+    if (_writingWorkout) throw StateError('Workout save in progress');
+    _writingWorkout = true;
+    try {
+      await _store.write(
+        storageKey,
+        jsonEncode({..._toJson(), 'workoutDraft': null}),
+      );
+      _workoutDraft = null;
+      notifyListeners();
+    } finally {
+      _writingWorkout = false;
+    }
+  }
+
+  Future<bool> finishWorkoutDraft() async {
+    if (_writingWorkout) throw StateError('Workout save in progress');
+    final draft = _workoutDraft;
+    if (draft == null || draft.setCount == 0) return false;
+    final day = dayKey(draft.startedAt);
+    final records = [
+      for (final e in draft.sets.entries)
+        if (e.value.isNotEmpty)
+          SessionRecord(exerciseId: e.key, day: day, sets: e.value),
+    ];
+    final workout = WorkoutLog(
+      day: day,
+      minutes: now.difference(draft.startedAt).inMinutes.clamp(1, 600),
+      templateId: draft.templateId,
+    );
+    _writingWorkout = true;
+    try {
+      await _store.write(
+        storageKey,
+        jsonEncode({
+          ..._toJson(),
+          'workoutDraft': null,
+          'sessions': [
+            for (final s in [..._sessions, ...records]) s.toJson(),
+          ],
+          'workouts': [
+            for (final w in [..._workouts, workout]) w.toJson(),
+          ],
+        }),
+      );
+      _sessions.addAll(records);
+      _workouts.add(workout);
+      _workoutDraft = null;
+      notifyListeners();
+      return true;
+    } finally {
+      _writingWorkout = false;
+    }
+  }
 
   Future<void> _save() async {
     notifyListeners();
@@ -528,6 +611,7 @@ class AppState extends ChangeNotifier {
 
   /// Borra todo del dispositivo. Irreversible.
   Future<void> eraseAll() async {
+    _workoutDraft = null;
     _disclaimerAccepted = false;
     _profile = null;
     _screening = null;

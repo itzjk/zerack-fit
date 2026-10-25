@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:zerack_core/zerack_core.dart';
 
+import '../../data/app_state.dart';
+import '../../data/workout_draft.dart';
 import '../../services.dart';
 import '../scope.dart';
 import '../strings.dart';
@@ -19,6 +21,8 @@ class WorkoutPage extends StatefulWidget {
   const WorkoutPage.single({super.key, required Exercise this.exercise})
     : template = null;
 
+  const WorkoutPage.resume({super.key}) : template = null, exercise = null;
+
   final WorkoutTemplate? template;
   final Exercise? exercise;
 
@@ -29,7 +33,13 @@ class WorkoutPage extends StatefulWidget {
 class _WorkoutPageState extends State<WorkoutPage> {
   late final List<PlannedExercise> _planned;
   final Map<String, List<LoggedSet>> _sets = {};
-  final _started = DateTime.now();
+  late final DateTime _started;
+  late final String _name;
+  String? _templateId;
+  late AppState _state;
+  bool _initialized = false;
+  bool _busy = false;
+  DateTime? _restUntil;
   int _current = 0;
   final _load = TextEditingController();
   final _reps = TextEditingController();
@@ -37,9 +47,14 @@ class _WorkoutPageState extends State<WorkoutPage> {
   Duration _restLeft = Duration.zero;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _initialized = true;
+    _state = AppScope.of(context);
+    final draft = _state.workoutDraft;
     _planned =
+        draft?.planned ??
         widget.template?.exercises ??
         [
           PlannedExercise(
@@ -52,12 +67,18 @@ class _WorkoutPageState extends State<WorkoutPage> {
                 : const Duration(seconds: 60),
           ),
         ];
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_load.text.isEmpty) _prefillLoad();
+    _started = draft?.startedAt ?? _state.now;
+    _name = draft?.name ?? widget.template?.name ?? widget.exercise!.name;
+    _templateId = draft != null ? draft.templateId : widget.template?.id;
+    if (draft != null) {
+      for (final entry in draft.sets.entries) {
+        _sets[entry.key] = List.of(entry.value);
+      }
+      _current = draft.current;
+      _restUntil = draft.restUntil;
+      _updateRest();
+    }
+    _prefillLoad();
   }
 
   @override
@@ -77,11 +98,55 @@ class _WorkoutPageState extends State<WorkoutPage> {
       _load.text = '0';
       return;
     }
-    final d = AppScope.of(context).suggestionFor(e, targetReps: _p.targetReps);
+    final done = _sets[e.id];
+    if (done != null && done.isNotEmpty) {
+      _load.text = Es.kg(done.last.loadKg).replaceAll(' kg', '');
+      return;
+    }
+    final d = _state.suggestionFor(e, targetReps: _p.targetReps);
     _load.text = d == null ? '' : Es.kg(d.nextLoadKg).replaceAll(' kg', '');
   }
 
-  void _goTo(int i) {
+  WorkoutDraft _snapshot({
+    Map<String, List<LoggedSet>>? sets,
+    int? current,
+    DateTime? restUntil,
+  }) => WorkoutDraft(
+    startedAt: _started,
+    name: _name,
+    templateId: _templateId,
+    planned: _planned,
+    sets: sets ?? _sets,
+    current: current ?? _current,
+    restUntil: restUntil,
+  );
+
+  Future<bool> _saveDraft(WorkoutDraft draft) async {
+    if (_busy) return false;
+    setState(() => _busy = true);
+    try {
+      await _state.saveWorkoutDraft(draft);
+      return true;
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Set not saved. Please try again.')),
+        );
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _goTo(int i) async {
+    if (_busy) return;
+    if (_sets.values.any((s) => s.isNotEmpty)) {
+      if (!await _saveDraft(_snapshot(current: i, restUntil: _restUntil))) {
+        return;
+      }
+    }
+    if (!mounted) return;
     setState(() {
       _current = i;
       _reps.clear();
@@ -90,61 +155,110 @@ class _WorkoutPageState extends State<WorkoutPage> {
     _prefillLoad();
   }
 
-  void _startRest(Duration d) {
+  void _updateRest() {
     _restTimer?.cancel();
-    setState(() => _restLeft = d);
-    _restTimer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) return t.cancel();
-      setState(() => _restLeft -= const Duration(seconds: 1));
-      if (_restLeft <= Duration.zero) {
-        t.cancel();
+    Duration remaining() {
+      final left = _restUntil?.difference(_state.now) ?? Duration.zero;
+      return left.isNegative ? Duration.zero : left;
+    }
+
+    _restLeft = remaining();
+    if (_restLeft == Duration.zero) return;
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return timer.cancel();
+      setState(() => _restLeft = remaining());
+      if (_restLeft == Duration.zero) {
+        timer.cancel();
         HapticFeedback.mediumImpact();
       }
     });
   }
 
-  void _addSet() {
+  Future<void> _skipRest() async {
+    if (!await _saveDraft(_snapshot())) return;
+    if (!mounted) return;
+    _restTimer?.cancel();
+    setState(() {
+      _restUntil = null;
+      _restLeft = Duration.zero;
+    });
+  }
+
+  Future<void> _addSet() async {
+    if (_busy) return;
     final load = _p.exercise.bodyweight
         ? 0.0
         : double.tryParse(_load.text.replaceAll(',', '.'));
     final reps = int.tryParse(_reps.text);
-    if (load == null || load < 0 || load > 1000 || reps == null || reps < 1) {
+    if (load == null ||
+        !load.isFinite ||
+        load < 0 ||
+        load > 1000 ||
+        reps == null ||
+        reps < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Revisa el peso y las repeticiones')),
       );
       return;
     }
+    final sets = {
+      ..._sets,
+      _p.exercise.id: [..._done, LoggedSet(loadKg: load, reps: reps)],
+    };
+    final restUntil = sets[_p.exercise.id]!.length < _p.sets
+        ? _state.now.add(_p.rest)
+        : null;
+    if (!await _saveDraft(_snapshot(sets: sets, restUntil: restUntil))) return;
+    if (!mounted) return;
     setState(() {
       _sets
-          .putIfAbsent(_p.exercise.id, () => [])
-          .add(LoggedSet(loadKg: load, reps: reps));
+        ..clear()
+        ..addAll(sets);
       _reps.clear();
+      _restUntil = restUntil;
+      _updateRest();
     });
-    if (_done.length < _p.sets) _startRest(_p.rest);
   }
 
   Future<void> _finish() async {
-    final state = AppScope.of(context);
+    if (_busy) return;
     final health = ServicesScope.of(context).health;
-    final minutes = DateTime.now().difference(_started).inMinutes.clamp(1, 600);
-    await state.logWorkout(
-      setsByExercise: _sets,
-      minutes: minutes,
-      templateId: widget.template?.id,
-    );
-    if (state.settings.healthSync && health.supported) {
-      final kcal = activityKcal(
-        met: Compendium.resistanceMultiple.met,
-        weightKg: state.profile!.weightKg,
-        duration: Duration(minutes: minutes),
-      ).round();
-      try {
-        await health.writeWorkout(_started, DateTime.now(), kcal);
-      } on Object {
-        // La sincronización es opcional; el entreno ya quedó guardado.
+    setState(() => _busy = true);
+    try {
+      final saved = await _state.finishWorkoutDraft();
+      if (!saved) return;
+      if (_state.settings.healthSync && health.supported) {
+        final kcal = activityKcal(
+          met: Compendium.resistanceMultiple.met,
+          weightKg: _state.profile!.weightKg,
+          duration: Duration(minutes: _state.workouts.last.minutes),
+        ).round();
+        try {
+          await health.writeWorkout(_started, _state.now, kcal);
+        } on Object {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Workout saved locally. Health sync failed.'),
+              ),
+            );
+          }
+        }
       }
+      if (mounted) Navigator.of(context).pop();
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Workout not finished. Your saved sets are safe. Try again.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    if (mounted) Navigator.of(context).pop();
   }
 
   Future<void> _feelBad() async {
@@ -175,6 +289,19 @@ class _WorkoutPageState extends State<WorkoutPage> {
           ],
         ),
       );
+      try {
+        await _state.discardWorkoutDraft();
+      } on Object {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Could not clear the stopped session. Do not resume training.',
+              ),
+            ),
+          );
+        }
+      }
       if (mounted) Navigator.of(context).pop();
     }
   }
@@ -188,151 +315,162 @@ class _WorkoutPageState extends State<WorkoutPage> {
     ).suggestionFor(e, targetReps: _p.targetReps);
     final numeric = [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))];
     final anyDone = _sets.values.any((s) => s.isNotEmpty);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.template?.name ?? e.name),
-        actions: [
-          TextButton(
-            key: const Key('session-save'),
-            onPressed: anyDone ? _finish : null,
-            child: const Text('Terminar'),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (_planned.length > 1)
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final (i, p) in _planned.indexed)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(
-                          '${p.exercise.name} '
-                          '${(_sets[p.exercise.id] ?? const []).length}/${p.sets}',
-                        ),
-                        selected: i == _current,
-                        onSelected: (_) => _goTo(i),
-                      ),
-                    ),
-                ],
-              ),
+    return PopScope(
+      canPop: !_busy,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_name),
+          actions: [
+            TextButton(
+              key: const Key('session-save'),
+              onPressed: anyDone && !_busy ? _finish : null,
+              child: const Text('Terminar'),
             ),
-          const SizedBox(height: 12),
-          Text(e.name, style: text.headlineSmall),
-          Text(
-            '${_p.sets} series × ${_p.minReps}–${_p.maxReps} '
-            '${e.id == 'plank' ? 'segundos' : 'repeticiones'} · '
-            'descanso ${_p.rest.inSeconds ~/ 60 > 0 ? '${_p.rest.inMinutes} min' : '${_p.rest.inSeconds} s'}',
-          ),
-          if (e.cue != null) Text(e.cue!, style: text.bodySmall),
-          const SizedBox(height: 8),
-          if (e.bodyweight)
-            const Text(
-              'Con peso corporal: cuando pases el rango, haz la '
-              'variante más difícil.',
-            )
-          else
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
             Text(
-              suggestion == null
-                  ? 'Primera vez: elige un peso que puedas mover '
-                        '${_p.maxReps} veces con buena técnica.'
-                  : Es.progression(suggestion),
-              key: const Key('progression-hint'),
+              _busy
+                  ? 'Saving locally...'
+                  : anyDone
+                  ? 'Sets saved on this device. You can leave and resume.'
+                  : 'Each set is saved when you add it.',
+              key: const Key('workout-save-status'),
+              style: text.bodySmall,
             ),
-          if (_restLeft > Duration.zero)
-            Card(
-              color: Theme.of(context).colorScheme.secondaryContainer,
-              child: ListTile(
-                key: const Key('rest-timer'),
-                leading: const Icon(Icons.timer_outlined),
-                title: Text(
-                  'Descanso: ${_restLeft.inMinutes}:'
-                  '${(_restLeft.inSeconds % 60).toString().padLeft(2, '0')}',
-                ),
-                trailing: TextButton(
-                  onPressed: () {
-                    _restTimer?.cancel();
-                    setState(() => _restLeft = Duration.zero);
-                  },
-                  child: const Text('Saltar'),
+            if (_planned.length > 1)
+              SizedBox(
+                height: 40,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final (i, p) in _planned.indexed)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(
+                            '${p.exercise.name} '
+                            '${(_sets[p.exercise.id] ?? const []).length}/${p.sets}',
+                          ),
+                          selected: i == _current,
+                          onSelected: _busy ? null : (_) => _goTo(i),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+            const SizedBox(height: 12),
+            Text(e.name, style: text.headlineSmall),
+            Text(
+              '${_p.sets} series × ${_p.minReps}–${_p.maxReps} '
+              '${e.id == 'plank' ? 'segundos' : 'repeticiones'} · '
+              'descanso ${_p.rest.inSeconds ~/ 60 > 0 ? '${_p.rest.inMinutes} min' : '${_p.rest.inSeconds} s'}',
             ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              if (!e.bodyweight) ...[
+            if (e.cue != null) Text(e.cue!, style: text.bodySmall),
+            const SizedBox(height: 8),
+            if (e.bodyweight)
+              const Text(
+                'Con peso corporal: cuando pases el rango, haz la '
+                'variante más difícil.',
+              )
+            else
+              Text(
+                suggestion == null
+                    ? 'Primera vez: elige un peso que puedas mover '
+                          '${_p.maxReps} veces con buena técnica.'
+                    : Es.progression(suggestion),
+                key: const Key('progression-hint'),
+              ),
+            if (_restLeft > Duration.zero)
+              Card(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                child: ListTile(
+                  key: const Key('rest-timer'),
+                  leading: const Icon(Icons.timer_outlined),
+                  title: Text(
+                    'Descanso: ${_restLeft.inMinutes}:'
+                    '${(_restLeft.inSeconds % 60).toString().padLeft(2, '0')}',
+                  ),
+                  trailing: TextButton(
+                    onPressed: _busy ? null : _skipRest,
+                    child: const Text('Saltar'),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (!e.bodyweight) ...[
+                  Expanded(
+                    child: TextField(
+                      key: const Key('set-load'),
+                      enabled: !_busy,
+                      controller: _load,
+                      decoration: const InputDecoration(labelText: 'Peso (kg)'),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: numeric,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: TextField(
-                    key: const Key('set-load'),
-                    controller: _load,
-                    decoration: const InputDecoration(labelText: 'Peso (kg)'),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+                    key: const Key('set-reps'),
+                    enabled: !_busy,
+                    controller: _reps,
+                    decoration: InputDecoration(
+                      labelText: e.id == 'plank' ? 'Segundos' : 'Repeticiones',
                     ),
-                    inputFormatters: numeric,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                 ),
-                const SizedBox(width: 12),
+                IconButton.filled(
+                  key: const Key('set-add'),
+                  tooltip: 'Agregar serie',
+                  onPressed: _busy ? null : _addSet,
+                  icon: const Icon(Icons.add),
+                ),
               ],
-              Expanded(
-                child: TextField(
-                  key: const Key('set-reps'),
-                  controller: _reps,
-                  decoration: InputDecoration(
-                    labelText: e.id == 'plank' ? 'Segundos' : 'Repeticiones',
-                  ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            const SizedBox(height: 12),
+            for (final (i, s) in _done.indexed)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(child: Text('${i + 1}')),
+                title: Text(
+                  e.bodyweight ? '${s.reps}' : '${Es.kg(s.loadKg)} × ${s.reps}',
                 ),
               ),
-              IconButton.filled(
-                key: const Key('set-add'),
-                tooltip: 'Agregar serie',
-                onPressed: _addSet,
-                icon: const Icon(Icons.add),
+            if (_done.length >= _p.sets && _current < _planned.length - 1)
+              FilledButton(
+                key: const Key('next-exercise'),
+                style: ZerackTheme.accentStyle,
+                onPressed: _busy ? null : () => _goTo(_current + 1),
+                child: const Text('Siguiente ejercicio'),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          for (final (i, s) in _done.indexed)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(child: Text('${i + 1}')),
-              title: Text(
-                e.bodyweight ? '${s.reps}' : '${Es.kg(s.loadKg)} × ${s.reps}',
-              ),
-            ),
-          if (_done.length >= _p.sets && _current < _planned.length - 1)
+            const SizedBox(height: 24),
             FilledButton(
-              key: const Key('next-exercise'),
-              style: ZerackTheme.accentStyle,
-              onPressed: () => _goTo(_current + 1),
-              child: const Text('Siguiente ejercicio'),
+              key: const Key('session-finish'),
+              onPressed: anyDone && !_busy ? _finish : null,
+              child: const Text('Terminar entrenamiento'),
             ),
-          const SizedBox(height: 24),
-          FilledButton(
-            key: const Key('session-finish'),
-            onPressed: anyDone ? _finish : null,
-            child: const Text('Terminar entrenamiento'),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            key: const Key('feel-bad'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: const Key('feel-bad'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              icon: const Icon(Icons.warning_amber),
+              label: const Text('Me siento mal'),
+              onPressed: _busy ? null : _feelBad,
             ),
-            icon: const Icon(Icons.warning_amber),
-            label: const Text('Me siento mal'),
-            onPressed: _feelBad,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
