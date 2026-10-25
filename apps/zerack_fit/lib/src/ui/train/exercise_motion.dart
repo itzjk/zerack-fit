@@ -71,6 +71,8 @@ class ExerciseMotion {
   final Rect? bench;
   final Offset? anchor;
 
+  Rect get paintBounds => MotionViewport.bounds(this);
+
   factory ExerciseMotion.fromJson(Map<String, Object?> j) {
     Offset pt(Object? v) {
       final l = (v as List<Object?>).cast<num>();
@@ -105,6 +107,119 @@ Map<String, ExerciseMotion> parseExerciseMotions(String raw) {
       if (!e.key.startsWith('_'))
         e.key: ExerciseMotion.fromJson(e.value as Map<String, Object?>),
   };
+}
+
+class MotionViewport {
+  static Rect _point(Offset p) => Rect.fromLTRB(p.dx, p.dy, p.dx, p.dy);
+
+  static Rect _step(Rect origin, double from, double to, double length) {
+    final delta = (to - from + 180) % 360 - 180;
+    final low = math.min(from, from + delta);
+    final high = math.max(from, from + delta);
+    final angles = <double>[low, high];
+    for (var i = (low / 90).ceil(); i <= (high / 90).floor(); i++) {
+      angles.add(i * 90.0);
+    }
+    final xs = angles.map((a) => math.sin(a * math.pi / 180) * length);
+    final ys = angles.map((a) => -math.cos(a * math.pi / 180) * length);
+    return Rect.fromLTRB(
+      origin.left + xs.reduce(math.min),
+      origin.top + ys.reduce(math.min),
+      origin.right + xs.reduce(math.max),
+      origin.bottom + ys.reduce(math.max),
+    );
+  }
+
+  static Rect bounds(ExerciseMotion motion) {
+    final a = motion.from;
+    final b = motion.to;
+    final Rect ankle, knee, hip;
+    if (motion.root == MotionRoot.ankle) {
+      ankle = _point(motion.at);
+      knee = _step(ankle, a.shin, b.shin, Joints.shinLength);
+      hip = _step(knee, a.thigh, b.thigh, Joints.thighLength);
+    } else {
+      hip = _point(motion.at);
+      knee = _step(hip, a.thigh, b.thigh, Joints.thighLength);
+      ankle = _step(knee, a.shin, b.shin, Joints.shinLength);
+    }
+    final shoulder = _step(hip, a.torso, b.torso, Joints.torsoLength);
+    final head = _step(
+      shoulder,
+      a.torso,
+      b.torso,
+      Joints.neckLength + Joints.headRadius,
+    );
+    final elbow = _step(shoulder, a.upper, b.upper, Joints.upperArmLength);
+    final wrist = _step(elbow, a.fore, b.fore, Joints.forearmLength);
+    var result = const Rect.fromLTRB(4, 95.5, 96, 95.5).inflate(0.6);
+    for (final joint in [ankle, knee, hip, shoulder, elbow, wrist]) {
+      result = result.expandToInclude(joint.inflate(3));
+    }
+    result = result.expandToInclude(head.inflate(Joints.headRadius + 3));
+    if (motion.props.contains('barbell')) {
+      result = result.expandToInclude(wrist.inflate(6));
+    }
+    if (motion.props.contains('dumbbell')) {
+      result = result.expandToInclude(
+        Rect.fromLTRB(
+          wrist.left - 5.5,
+          wrist.top - 3,
+          wrist.right + 5.5,
+          wrist.bottom + 3,
+        ),
+      );
+    }
+    if (motion.props.contains('handle')) {
+      result = result.expandToInclude(
+        Rect.fromLTRB(
+          wrist.left - 1,
+          wrist.top - 4,
+          wrist.right + 1,
+          wrist.bottom + 4,
+        ),
+      );
+    }
+    if (motion.bench case final bench?) {
+      result = result.expandToInclude(
+        Rect.fromLTRB(
+          bench.left,
+          math.min(bench.top, 95.5),
+          bench.right,
+          math.max(bench.bottom, 95.5),
+        ).inflate(0.6),
+      );
+    }
+    if (motion.props.contains('seat')) {
+      result = result.expandToInclude(
+        Rect.fromLTRB(
+          hip.left - 10,
+          math.min(hip.top + 3, 95.5),
+          hip.right + 8,
+          math.max(hip.bottom + 3, 95.5),
+        ).inflate(0.6),
+      );
+    }
+    if (motion.props.contains('sled')) {
+      result = result.expandToInclude(
+        Rect.fromLTRB(
+          hip.left - 14,
+          hip.top - 6,
+          hip.right + 10,
+          hip.bottom + 10,
+        ).inflate(0.6),
+      );
+    }
+    if (motion.props.contains('platform')) {
+      result = result.expandToInclude(ankle.inflate(8.6));
+    }
+    if (motion.anchor case final anchor?) {
+      if (motion.props.contains('cable')) {
+        result = result.expandToInclude(_point(anchor).inflate(2.2));
+      }
+    }
+    return result.inflate(2);
+  }
 }
 
 Future<Map<String, ExerciseMotion>>? _cache;
@@ -240,15 +355,26 @@ class _ExerciseAnimationState extends State<ExerciseAnimation>
 }
 
 class _MotionPainter extends CustomPainter {
-  _MotionPainter(this.motion, this.t) : super(repaint: t);
+  _MotionPainter(this.motion, this.t)
+    : viewport = motion.paintBounds,
+      super(repaint: t);
 
   final ExerciseMotion motion;
   final Animation<double> t;
+  final Rect viewport;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final s = size.shortestSide / 100;
+    final s = math.min(
+      size.width / viewport.width,
+      size.height / viewport.height,
+    );
+    canvas.translate(
+      (size.width - viewport.width * s) / 2,
+      (size.height - viewport.height * s) / 2,
+    );
     canvas.scale(s);
+    canvas.translate(-viewport.left, -viewport.top);
     final j = Joints.solve(
       motion,
       MotionPose.lerp(motion.from, motion.to, t.value),
