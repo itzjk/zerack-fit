@@ -134,6 +134,15 @@ Future<AppState> pumpApp(
 
 Future<void> tapKey(WidgetTester t, String key) async {
   final f = find.byKey(Key(key));
+  // Las listas largas construyen sus filas al desplazarse; cuánto mide la
+  // pantalla depende del día (día de entreno o de descanso).
+  if (f.evaluate().isEmpty) {
+    await t.scrollUntilVisible(
+      f,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+  }
   await t.ensureVisible(f);
   await t.pumpAndSettle();
   await t.tap(f);
