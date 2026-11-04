@@ -37,8 +37,18 @@ Compartir → "Agregar a inicio"). APK de Android en
 - Botón **"Me siento mal"** que detiene la sesión ante signos de alarma.
 
 **ZERACK IA** (opcional)
-- Asistente que conoce tu perfil, tu meta y lo que comiste; propone comidas y
-  tú confirmas. Ver [docs/IA.md](docs/IA.md).
+- Agente que conoce tu perfil, tu meta, tu chequeo, lo que comiste y lo que
+  entrenaste. Anota comida, ajusta tu plan, abre tu sesión guiada y explica
+  cada regla con su fuente; tú confirmas lo que cambia tus datos. Habla con
+  voz (Fish Audio).
+- Escaneo de platos con Gemini, sin pedir clave si la app usa el servidor de
+  ZERACK (`server/`). Ver [docs/IA.md](docs/IA.md).
+
+**Funciones únicas**
+- **Recuperación muscular:** qué músculos ya descansaron 48 h (ACSM 2011) y
+  aviso si tu sesión de hoy toca uno que no.
+- **Completa tu día:** alimentos del USDA con gramos exactos para llegar a tu
+  proteína mínima sin pasarte de tu meta.
 
 **Progreso**: peso con gráfica, entrenos, fuerza y pulso.
 
@@ -58,6 +68,7 @@ privacidad y fuentes.
 ```
 packages/zerack_core   Motor en Dart puro: fórmulas, reglas y pruebas
 apps/zerack_fit        App Flutter (iPhone, Android, web para pruebas)
+server                 Servidor intermedio (Cloudflare Worker) para Gemini y voz
 tools/foods            Generador de la base de alimentos desde el USDA
 tools/icon             Generador del ícono
 docs/                  IA, plan, revisión

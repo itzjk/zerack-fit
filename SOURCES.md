@@ -18,6 +18,8 @@ con su identificador estable y se muestra en la app (Perfil → Fuentes).
 | Signos de alarma | Lista de signos y síntomas | Riebe et al. 2015, tabla 1 |
 | Progresión de cargas | Regla 2-de-más en 2 sesiones, +2–10 % | ACSM Position Stand, *Med Sci Sports Exerc* 2009;41(3):687-708 |
 | Plan semanal | Días por nivel (principiante 2–3, intermedio 3–4, avanzado 4–6), rutinas divididas a partir de 4 días, 8–12 reps, series y descansos, ≥48 h antes de repetir músculo | ACSM 2009 y Garber et al., *Med Sci Sports Exerc* 2011;43(7):1334-1359 |
+| Recuperación muscular | ≥48 h antes de volver a entrenar el mismo grupo muscular | Garber et al. (ACSM 2011), *Med Sci Sports Exerc* 2011;43(7):1334-1359 |
+| Completa tu día | Mínimo de proteína 1.4 g/kg y meta de energía; alimentos y gramos del USDA | ISSN 2017 y USDA FoodData Central |
 | Actividad semanal | 150–300 min moderados, vigorosos ×2, fuerza 2+ días | Bull et al. (OMS 2020), *Br J Sports Med* 2020;54(24):1451-1462 |
 | Pulso máximo | 208 − 0.7 × edad | Tanaka et al., *J Am Coll Cardiol* 2001;37(1):153-156 |
 | Bandas de intensidad | % de frecuencia cardiaca de reserva | ACSM's Guidelines for Exercise Testing and Prescription, 11.ª ed. |
@@ -38,6 +40,12 @@ con su identificador estable y se muestra en la app (Perfil → Fuentes).
   `assets/exercise_motion.json`), ilustrativas. Sin videos ni imágenes de
   terceros.
 
+- **Completa tu día:** elige por densidad de proteína (g por kcal), en
+  porciones de 50 a 250 g redondeadas a 10 g, sin pasar la meta de energía.
+  Es un criterio del proyecto para sugerir; los números son del USDA.
+- **Recuperación por días:** los registros no guardan la hora; una sesión del
+  lunes queda lista el miércoles.
+
 ## Lo que todavía NO tiene fuente (y por eso no está)
 
 - Bajar cargas automáticamente: ACSM 2009 no define una regla.
@@ -50,7 +58,9 @@ con su identificador estable y se muestra en la app (Perfil → Fuentes).
 
 - **Escáner de platos:** la IA solo identifica alimentos y estima gramos. Las
   calorías y macros salen de la base del USDA. La persona confirma.
-- **Asistente:** responde con los datos que devuelven sus herramientas (perfil,
-  meta, comidas, plan, base del USDA). No diagnostica ni interpreta síntomas.
+- **Agente:** responde con los datos que devuelven sus herramientas (perfil,
+  meta, comidas, plan, recuperación, base del USDA) y explica cada regla con su
+  fuente. Todo lo que cambia datos (comida, plan) pasa por una tarjeta que la
+  persona confirma. No diagnostica ni interpreta síntomas.
 - **Pulso por cámara:** algoritmo propio (picos + autocorrelación) que rechaza
   la lectura si la señal no es periódica. Es una estimación de bienestar.

@@ -1,5 +1,25 @@
 # Cambios
 
+## 0.3.0 — 2026-11-03
+
+- **Agente ZERACK IA de verdad:** conoce perfil, meta, chequeo, comidas,
+  entrenos, plan y recuperación; anota comida, ajusta el plan, abre la sesión
+  guiada y explica cada regla con su fuente. Lo que cambia datos se confirma
+  con un toque.
+- **Gemini:** escaneo de platos y agente con `gemini-3.6-flash`. Arreglado: una
+  clave de Gemini se guardaba pero se mandaba a Anthropic, que la rechazaba. La
+  app reconoce el tipo de clave y la verifica al guardarla.
+- **Servidor de ZERACK** (`server/`, Cloudflare Worker): guarda las claves de
+  Gemini y Fish como secretos, límite por dispositivo y por día, no guarda
+  fotos. La app lo usa por defecto; cada quien puede poner su clave.
+- **Voz con Fish Audio:** el agente lee sus respuestas.
+- **Recuperación muscular:** qué músculos ya cumplieron 48 h (ACSM 2011) y
+  aviso si la sesión de hoy toca uno que no.
+- **Completa tu día:** alimentos del USDA con gramos exactos para llegar a tu
+  proteína mínima sin pasarte de tu meta.
+- Si el almacenamiento seguro del navegador falla, la clave se guarda en el
+  almacenamiento local en lugar de perderse.
+
 ## Sin publicar
 
 - **Interfaz nueva en blanco y negro neón**, de la misma familia que el resto de
