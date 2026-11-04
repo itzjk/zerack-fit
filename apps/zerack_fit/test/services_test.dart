@@ -86,8 +86,8 @@ void main() {
       expect(await ai.unavailableReason(state), 'consent');
       await state.saveSettings(state.settings.copyWith(aiConsent: true));
       expect(await ai.unavailableReason(state), 'key');
-      await ai.setApiKey('  sk-x  ');
-      expect(await ai.apiKey(), 'sk-x');
+      await ai.setApiKey('  sk-ant-x  ', verify: false);
+      expect(await ai.apiKey(), 'sk-ant-x');
       expect(await ai.unavailableReason(state), isNull);
       await ai.setApiKey('');
       expect(await ai.apiKey(), isNull);

@@ -93,6 +93,7 @@ class Settings {
     this.aiConsent = false,
     this.aiBaseUrl,
     this.healthSync = false,
+    this.voiceReplies = false,
   });
 
   final WeightGoal goal;
@@ -110,6 +111,9 @@ class Settings {
   /// Sincronizar con Apple Health / Health Connect.
   final bool healthSync;
 
+  /// El agente lee sus respuestas en voz alta (Fish Audio, vía servidor).
+  final bool voiceReplies;
+
   Settings copyWith({
     WeightGoal? goal,
     TrainingLevel? level,
@@ -118,6 +122,7 @@ class Settings {
     bool? aiConsent,
     String? Function()? aiBaseUrl,
     bool? healthSync,
+    bool? voiceReplies,
   }) => Settings(
     goal: goal ?? this.goal,
     level: level ?? this.level,
@@ -126,6 +131,7 @@ class Settings {
     aiConsent: aiConsent ?? this.aiConsent,
     aiBaseUrl: aiBaseUrl == null ? this.aiBaseUrl : aiBaseUrl(),
     healthSync: healthSync ?? this.healthSync,
+    voiceReplies: voiceReplies ?? this.voiceReplies,
   );
 
   Map<String, Object?> toJson() => {
@@ -136,6 +142,7 @@ class Settings {
     'aiConsent': aiConsent,
     'aiBaseUrl': aiBaseUrl,
     'healthSync': healthSync,
+    'voiceReplies': voiceReplies,
   };
 
   factory Settings.fromJson(Map<String, Object?> j) => Settings(
@@ -154,6 +161,7 @@ class Settings {
     aiConsent: j['aiConsent'] as bool? ?? false,
     aiBaseUrl: j['aiBaseUrl'] as String?,
     healthSync: j['healthSync'] as bool? ?? false,
+    voiceReplies: j['voiceReplies'] as bool? ?? false,
   );
 }
 

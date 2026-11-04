@@ -17,7 +17,13 @@ class Services {
   factory Services.platform() {
     final client = http.Client();
     return Services(
-      ai: AiService(secrets: const SecureSecretStore(), httpClient: client),
+      ai: AiService(
+        secrets: FallbackSecretStore(
+          const SecureSecretStore(),
+          PrefsSecretStore(),
+        ),
+        httpClient: client,
+      ),
       openFoodFacts: OpenFoodFactsClient(client),
       health: PlatformHealthBridge(),
     );

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:zerack_core/zerack_core.dart';
 
-import '../../ai/claude_client.dart' show assistantName, ClaudeConfig;
+import '../../ai/ai_service.dart';
+import '../../ai/claude_client.dart' show assistantName;
 import '../../services.dart';
 import '../common/text_prompt.dart';
 import '../onboarding/onboarding_flow.dart';
@@ -201,24 +202,59 @@ class _AiSection extends StatefulWidget {
 }
 
 class _AiSectionState extends State<_AiSection> {
-  bool? _hasKey;
+  AiRoute? _route;
+  bool _loaded = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    ServicesScope.of(context).ai.apiKey().then((k) {
-      if (mounted) setState(() => _hasKey = k != null && k.isNotEmpty);
-    });
+    _refresh();
   }
 
-  Future<String?> _ask(String title, String label, {bool secret = false}) =>
-      showTextPrompt(context, title: title, label: label, secret: secret);
+  Future<void> _refresh() async {
+    final r = await ServicesScope.of(context).ai.route(AppScope.of(context));
+    if (mounted) {
+      setState(() {
+        _route = r;
+        _loaded = true;
+      });
+    }
+  }
+
+  void _say(String msg) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(msg, key: const Key('ai-snack'))));
+
+  Future<void> _setKey() async {
+    final ai = ServicesScope.of(context).ai;
+    final k = await showTextPrompt(
+      context,
+      title: 'Clave de Gemini o Anthropic',
+      label: 'AIza… o sk-ant-…',
+      secret: true,
+      fieldKey: const Key('profile-key-input'),
+      confirmKey: const Key('profile-key-save'),
+    );
+    if (k == null || k.trim().isEmpty) return;
+    try {
+      final r = await ai.setApiKey(k);
+      _say(r.message);
+    } on UnknownKeyFormat catch (e) {
+      _say(e.message);
+    } on Object catch (e) {
+      _say('No se pudo guardar la clave en este dispositivo: $e');
+    }
+    await _refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
     final ai = ServicesScope.of(context).ai;
     final s = state.settings;
+    final server = ai.serverUrl(state);
+    final ownKey =
+        _route != null && _route!.provider != AiProvider.zerackServer;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -228,8 +264,8 @@ class _AiSectionState extends State<_AiSection> {
           contentPadding: EdgeInsets.zero,
           title: const Text('Usar IA'),
           subtitle: const Text(
-            'Escaneo de platos y asistente. Envía a Anthropic solo lo '
-            'necesario cuando los usas.',
+            'Agente y escaneo de platos. Solo envía lo necesario cuando los '
+            'usas.',
           ),
           value: s.aiConsent,
           onChanged: (v) {
@@ -237,43 +273,56 @@ class _AiSectionState extends State<_AiSection> {
             state.saveSettings(s.copyWith(aiConsent: v));
           },
         ),
+        if (_loaded)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              _route == null
+                  ? 'Sin conexión de IA: pon tu clave o un servidor.'
+                  : 'Usando: ${_route!.label}',
+              key: const Key('ai-route'),
+            ),
+          ),
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Clave de la API de Anthropic'),
+          title: const Text('Tu clave (opcional)'),
           subtitle: Text(
-            _hasKey == true ? 'Guardada en el llavero' : 'Sin clave',
+            ownKey
+                ? 'Guardada en este teléfono'
+                : 'Gemini (AIza…) o Anthropic (sk-ant-…)',
           ),
-          trailing: _hasKey == true
+          trailing: ownKey
               ? TextButton(
+                  key: const Key('ai-key-remove'),
                   onPressed: () async {
                     await ai.setApiKey(null);
-                    if (mounted) setState(() => _hasKey = false);
+                    await _refresh();
                   },
                   child: const Text('Quitar'),
                 )
               : const Icon(Icons.chevron_right),
-          onTap: () async {
-            final k = await _ask('Clave de API', 'sk-ant-…', secret: true);
-            if (k == null || k.trim().isEmpty) return;
-            await ai.setApiKey(k);
-            if (mounted) setState(() => _hasKey = true);
-          },
+          onTap: _setKey,
         ),
         ListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Servidor (opcional)'),
-          subtitle: Text(s.aiBaseUrl ?? ClaudeConfig.anthropicBaseUrl),
+          title: const Text('Servidor de ZERACK'),
+          subtitle: Text(server ?? 'Sin servidor configurado'),
           trailing: s.aiBaseUrl == null
               ? const Icon(Icons.chevron_right)
               : TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     ai.resetConversation();
-                    state.saveSettings(s.copyWith(aiBaseUrl: () => null));
+                    await state.saveSettings(s.copyWith(aiBaseUrl: () => null));
+                    await _refresh();
                   },
                   child: const Text('Quitar'),
                 ),
           onTap: () async {
-            final url = await _ask('Servidor', 'https://…');
+            final url = await showTextPrompt(
+              context,
+              title: 'Servidor de ZERACK',
+              label: 'https://…',
+            );
             final u = Uri.tryParse(url?.trim() ?? '');
             if (u == null || u.scheme != 'https' || u.host.isEmpty) return;
             ai.resetConversation();
@@ -282,8 +331,18 @@ class _AiSectionState extends State<_AiSection> {
                 aiBaseUrl: () => u.toString().replaceAll(RegExp(r'/$'), ''),
               ),
             );
+            await _refresh();
           },
         ),
+        if (server != null)
+          SwitchListTile(
+            key: const Key('voice-switch'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Respuestas con voz'),
+            subtitle: const Text('El agente lee sus respuestas (Fish Audio).'),
+            value: s.voiceReplies,
+            onChanged: (v) => state.saveSettings(s.copyWith(voiceReplies: v)),
+          ),
       ],
     );
   }

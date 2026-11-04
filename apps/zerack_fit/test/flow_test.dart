@@ -183,9 +183,9 @@ void main() {
     await pumpApp(t, state: s, services: services);
     await openTab(t, 'IA');
     expect(find.byKey(const Key('ai-key')), findsOneWidget);
-    await t.enterText(find.byKey(const Key('ai-key')), 'sk-nueva');
+    await t.enterText(find.byKey(const Key('ai-key')), 'sk-ant-nueva');
     await tapKey(t, 'ai-key-save');
-    expect(await services.ai.apiKey(), 'sk-nueva');
+    expect(await services.ai.apiKey(), 'sk-ant-nueva');
     expect(find.byKey(const Key('chat-input')), findsOneWidget);
   });
 
@@ -218,7 +218,7 @@ void main() {
     expect(s.todayKcalEaten, 0);
     await tapKey(t, 'proposal-accept');
     expect(s.todayKcalEaten, 143);
-    expect(find.text('✓ Agregado a tu día'), findsOneWidget);
+    expect(find.text('Agregado a tu día'), findsOneWidget);
   });
 
   testWidgets('código de barras manual con Open Food Facts', (t) async {

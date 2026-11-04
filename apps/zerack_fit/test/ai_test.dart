@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:zerack_fit/src/ai/assistant.dart';
+import 'package:zerack_fit/src/ai/backends.dart';
 import 'package:zerack_fit/src/ai/claude_client.dart';
 import 'package:zerack_fit/src/ai/food_scanner.dart';
 
@@ -210,7 +211,10 @@ void main() {
             }),
           ),
         ]);
-        final scanner = FoodScanner(_client(api.client), realFoods);
+        final scanner = FoodScanner(
+          ClaudeBackend(_client(api.client)),
+          realFoods,
+        );
         final r = await scanner.scan(jpeg);
 
         final body = api.requests.single;
@@ -236,7 +240,7 @@ void main() {
 
     test('formato de imagen no soportado', () async {
       final scanner = FoodScanner(
-        _client(MockClient((_) async => http.Response('', 200))),
+        ClaudeBackend(_client(MockClient((_) async => http.Response('', 200)))),
         realFoods,
       );
       await expectLater(
@@ -247,7 +251,7 @@ void main() {
 
     test('respuesta no JSON', () {
       final scanner = FoodScanner(
-        _client(MockClient((_) async => http.Response('', 200))),
+        ClaudeBackend(_client(MockClient((_) async => http.Response('', 200)))),
         realFoods,
       );
       expect(() => scanner.parse('hola'), throwsA(isA<ClaudeBadRequest>()));
@@ -275,7 +279,7 @@ void main() {
         ]),
         textResponse('Te propuse 2 huevos.'),
       ]);
-      final a = Assistant(_client(api.client), state);
+      final a = Assistant(ClaudeBackend(_client(api.client)), state);
       final turn = await a.send('Desayuné 2 huevos');
 
       expect(turn.text, 'Te propuse 2 huevos.');
@@ -327,7 +331,7 @@ void main() {
         ]),
         textResponse('No encontré ese alimento.'),
       ]);
-      final a = Assistant(_client(api.client), state);
+      final a = Assistant(ClaudeBackend(_client(api.client)), state);
       final turn = await a.send('agrega algo');
       expect(turn.proposal, isNull);
       final results =
@@ -337,7 +341,7 @@ void main() {
 
     test('mensaje vacío es un error', () async {
       final a = Assistant(
-        _client(MockClient((_) async => http.Response('', 500))),
+        ClaudeBackend(_client(MockClient((_) async => http.Response('', 500)))),
         await onboardedState(),
       );
       expect(() => a.send('  '), throwsArgumentError);

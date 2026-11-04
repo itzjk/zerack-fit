@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:zerack_core/zerack_core.dart';
 
+import 'backends.dart';
 import 'claude_client.dart';
 
 enum ScanConfidence { low, medium, high }
@@ -43,9 +44,9 @@ class ScanResult {
 /// Analiza la foto de un plato. **La IA solo identifica alimentos y estima
 /// gramos**; las calorías y macros siempre salen de la base del USDA.
 class FoodScanner {
-  FoodScanner(this._client, this._foods);
+  FoodScanner(this._backend, this._foods);
 
-  final ClaudeClient _client;
+  final ScanBackend _backend;
   final FoodIndex _foods;
 
   static const maxGrams = 2000.0;
@@ -71,41 +72,6 @@ CATÁLOGO (id|nombre):
 $catalog''';
   }
 
-  static const _schema = {
-    'type': 'json_schema',
-    'schema': {
-      'type': 'object',
-      'properties': {
-        'is_food': {'type': 'boolean'},
-        'items': {
-          'type': 'array',
-          'items': {
-            'type': 'object',
-            'properties': {
-              'food_id': {
-                'anyOf': [
-                  {'type': 'integer'},
-                  {'type': 'null'},
-                ],
-              },
-              'name': {'type': 'string'},
-              'grams': {'type': 'number'},
-              'confidence': {
-                'type': 'string',
-                'enum': ['low', 'medium', 'high'],
-              },
-            },
-            'required': ['food_id', 'name', 'grams', 'confidence'],
-            'additionalProperties': false,
-          },
-        },
-        'note': {'type': 'string'},
-      },
-      'required': ['is_food', 'items', 'note'],
-      'additionalProperties': false,
-    },
-  };
-
   /// Tipo de imagen por su firma de bytes. La API acepta JPEG, PNG, GIF y
   /// WebP.
   static String? mediaTypeOf(Uint8List b) {
@@ -127,28 +93,12 @@ $catalog''';
     if (mediaType == null) {
       throw const ClaudeBadRequest('Formato de imagen no soportado');
     }
-    final msg = await _client.create(
+    final raw = await _backend.scanJson(
       system: _system,
-      messages: [
-        {
-          'role': 'user',
-          'content': [
-            {
-              'type': 'image',
-              'source': {
-                'type': 'base64',
-                'media_type': mediaType,
-                'data': base64Encode(image),
-              },
-            },
-            {'type': 'text', 'text': 'Analiza este plato.'},
-          ],
-        },
-      ],
-      outputFormat: _schema,
-      maxTokens: 4000,
+      image: image,
+      mediaType: mediaType,
     );
-    return parse(msg.text);
+    return parse(raw);
   }
 
   /// Valida la respuesta: descarta ids que no existen y gramos imposibles.

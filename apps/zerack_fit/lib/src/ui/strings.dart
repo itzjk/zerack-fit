@@ -137,4 +137,14 @@ abstract final class Es {
     'legs' => 'Piernas',
     _ => 'Entrenamiento',
   };
+
+  static String group(MuscleGroup g) => switch (g) {
+    MuscleGroup.legs => 'Piernas',
+    MuscleGroup.chest => 'Pecho',
+    MuscleGroup.back => 'Espalda',
+    MuscleGroup.shoulders => 'Hombros',
+    MuscleGroup.biceps => 'Bíceps',
+    MuscleGroup.triceps => 'Tríceps',
+    MuscleGroup.core => 'Abdomen',
+  };
 }

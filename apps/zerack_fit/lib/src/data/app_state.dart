@@ -105,6 +105,16 @@ class AppState extends ChangeNotifier {
   ({int weekday, WorkoutTemplate workout}) get nextWorkout =>
       plan.nextFrom(_clock().weekday);
 
+  /// Cada serie registrada, para calcular la recuperación muscular.
+  List<TrainedSet> get trainedSets => [
+    for (final s in _sessions)
+      for (final _ in s.sets)
+        TrainedSet(exerciseId: s.exerciseId, day: parseDayKey(s.day)),
+  ];
+
+  /// Recuperación por grupo muscular hoy (ACSM 2011: 48 h).
+  List<MuscleRecovery> get recovery => muscleRecovery(trainedSets, _clock());
+
   /// Sesiones de un ejercicio, de la más vieja a la más nueva.
   List<SessionRecord> sessionsFor(String exerciseId) =>
       List.unmodifiable(_sessions.where((s) => s.exerciseId == exerciseId));

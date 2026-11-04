@@ -1,5 +1,5 @@
 AVISO DE PRIVACIDAD — ZERACK Fit
-Versión 1.0 · 7 de octubre de 2026
+Versión 1.1 · 3 de noviembre de 2026
 
 Responsable: ZERACK. Contacto: [PENDIENTE: correo de contacto del responsable].
 
@@ -14,7 +14,10 @@ Varios de estos son datos personales sensibles. Por eso la app los trata con tu 
 Todo se guarda únicamente en tu teléfono. ZERACK Fit no tiene cuentas ni servidores propios y no recibe tus datos.
 
 3. Cuándo salen datos del teléfono (solo si tú usas la función)
-- Inteligencia artificial (opcional y desactivada por defecto). Al escanear un plato se envía la foto; al usar el asistente se envían tus mensajes y los datos de perfil, meta y registros que el asistente consulta. Se envían a Anthropic, PBC (proveedor del modelo Claude), o al servidor que tú configures, solo para generar la respuesta.
+- Inteligencia artificial (opcional y desactivada por defecto). Al escanear un plato se envía la foto; al usar el agente se envían tus mensajes y los datos de perfil, meta y registros que el agente consulta. Van a uno de estos, según lo que elijas:
+  · el servidor de ZERACK, que los reenvía a Google (Gemini) sin guardar fotos ni textos y solo cuenta cuántas veces se usa al día con un número aleatorio de tu teléfono (no te identifica);
+  · Google (Gemini) o Anthropic (Claude) directamente, si pones tu propia clave.
+- Voz del agente (opcional). El texto de la respuesta se envía al servidor de ZERACK, que lo convierte en audio con Fish Audio. No se guarda.
 - Código de barras. Se envía únicamente el número del código a Open Food Facts.
 - Apple Health / Health Connect. Los datos se intercambian dentro de tu teléfono con la app de salud del sistema.
 

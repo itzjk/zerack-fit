@@ -37,6 +37,10 @@ class _TrainPageState extends State<TrainPage> {
     final today = state.now.weekday;
     final day = _selected ?? today;
     final workout = plan.forWeekday(day);
+    final recovery = state.recovery;
+    final conflicts = workout == null || day != today
+        ? const <MuscleGroup>{}
+        : conflictsWith(workout, recovery);
     final text = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -76,6 +80,7 @@ class _TrainPageState extends State<TrainPage> {
           ],
         ),
         const SizedBox(height: 12),
+        _RecoveryCard(recovery: recovery),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -109,6 +114,17 @@ class _TrainPageState extends State<TrainPage> {
                     'verlo en movimiento',
                     style: text.bodySmall,
                   ),
+                  if (conflicts.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Ojo: ${conflicts.map(Es.group).join(', ')} todavía '
+                        'no cumple 48 h de descanso (ACSM 2011). Baja el peso '
+                        'o cambia esos ejercicios hoy.',
+                        key: const Key('recovery-warning'),
+                        style: const TextStyle(color: Zk.amber),
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   for (final e in workout.exercises)
                     ListTile(
@@ -362,6 +378,71 @@ class _ActivityDialogState extends State<_ActivityDialog> {
           child: const Text('Guardar'),
         ),
       ],
+    );
+  }
+}
+
+/// Qué grupos musculares ya descansaron 48 h (ACSM 2011).
+class _RecoveryCard extends StatelessWidget {
+  const _RecoveryCard({required this.recovery});
+  final List<MuscleRecovery> recovery;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Card(
+      key: const Key('recovery-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Recuperación muscular', style: text.titleMedium),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final r in recovery)
+                  _GroupChip(r, key: Key('recovery-${r.group.name}')),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Listo = pasaron 48 h o más desde que lo entrenaste (ACSM '
+              '2011). El número son las series de los últimos 7 días.',
+              style: text.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GroupChip extends StatelessWidget {
+  const _GroupChip(this.r, {super.key});
+  final MuscleRecovery r;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, label) = switch (r.status) {
+      RecoveryStatus.ready => (Zk.cyan, 'listo'),
+      RecoveryStatus.recovering => (Zk.amber, 'descansando'),
+      RecoveryStatus.fresh => (Zk.faint, 'sin registro'),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+        color: color.withValues(alpha: 0.08),
+      ),
+      child: Text(
+        '${Es.group(r.group)} · $label'
+        '${r.setsLast7Days > 0 ? ' · ${r.setsLast7Days}' : ''}',
+        style: TextStyle(color: color, fontSize: 12),
+      ),
     );
   }
 }

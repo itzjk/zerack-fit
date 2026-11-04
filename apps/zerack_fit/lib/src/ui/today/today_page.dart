@@ -31,6 +31,7 @@ class TodayPage extends StatelessWidget {
         ),
         _ReadinessCard(),
         _EnergyCard(),
+        _CompleteDayCard(),
         _WeekCard(),
       ],
     );
@@ -380,12 +381,106 @@ class _WeekCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${w.strengthDays} de ${WeeklySummary.strengthDaysMinimum} días '
-              'de fuerza ${w.meetsStrength ? '✓' : ''}',
+              'de fuerza${w.meetsStrength ? ' · cumplido' : ''}',
             ),
             const SizedBox(height: 4),
             Text(
               'Recomendación OMS 2020: 150–300 min moderados por semana (los '
               'vigorosos cuentan doble) y fuerza 2 días o más.',
+              style: text.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Completa tu día": alimentos del USDA con gramos exactos para llegar al
+/// mínimo de proteína (ISSN 2017) sin pasarse de la meta de energía.
+class _CompleteDayCard extends StatefulWidget {
+  const _CompleteDayCard();
+
+  @override
+  State<_CompleteDayCard> createState() => _CompleteDayCardState();
+}
+
+class _CompleteDayCardState extends State<_CompleteDayCard> {
+  bool _added = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final target = state.energyTarget;
+    final protein = state.proteinRange;
+    if (target == null || protein == null) return const SizedBox.shrink();
+    final eaten = state.todayNutrients;
+    final c = completeDay(
+      foods: state.foods,
+      targetKcal: target.kcal,
+      eatenKcal: eaten.kcal,
+      minProteinG: protein.minG,
+      eatenProteinG: eaten.proteinG,
+    );
+    final text = Theme.of(context).textTheme;
+    return Card(
+      key: const Key('complete-day'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Completa tu día', style: text.titleLarge),
+            const SizedBox(height: 4),
+            if (c.proteinCovered)
+              const Text(
+                'Ya llegaste a tu proteína mínima de hoy.',
+                key: Key('complete-day-covered'),
+              )
+            else ...[
+              Text(
+                'Te faltan ${c.remainingProteinG.round()} g de proteína y te '
+                'quedan ${c.remainingKcal.round().clamp(0, 99999)} kcal.',
+                key: const Key('complete-day-remaining'),
+              ),
+              const SizedBox(height: 8),
+              if (c.suggestions.isEmpty)
+                const Text(
+                  'Con la energía que te queda no alcanza una porción; '
+                  'prioriza proteína en tu próxima comida.',
+                )
+              else ...[
+                for (final s in c.suggestions)
+                  Text(
+                    '• ${s.food.name}: ${s.grams.round()} g · '
+                    '${s.nutrients.proteinG.round()} g proteína · '
+                    '${s.nutrients.kcal.round()} kcal',
+                  ),
+                const SizedBox(height: 8),
+                _added
+                    ? const Row(
+                        children: [
+                          Icon(Icons.check_circle, size: 18),
+                          SizedBox(width: 6),
+                          Text('Agregado a tu día'),
+                        ],
+                      )
+                    : FilledButton.tonal(
+                        key: const Key('complete-day-add'),
+                        onPressed: () async {
+                          for (final s in c.suggestions) {
+                            await state.addFoodFromDb(s.food, s.grams);
+                          }
+                          if (mounted) setState(() => _added = true);
+                        },
+                        child: const Text('Agregar estas porciones'),
+                      ),
+              ],
+            ],
+            const SizedBox(height: 4),
+            Text(
+              'Proteína mínima ${protein.minG.round()} g (ISSN 2017). '
+              'Alimentos y cantidades del USDA.',
               style: text.bodySmall,
             ),
           ],

@@ -68,14 +68,17 @@ Services fakeServices({
   http.Client? off,
   HealthBridge? health,
   String? apiKey = 'sk-test',
+  AiService? ai,
 }) {
   final secrets = MemorySecretStore();
   if (apiKey != null) secrets.data[AiService.apiKeyName] = apiKey;
   return Services(
-    ai: AiService(
-      secrets: secrets,
-      httpClient: claude ?? MockClient((_) async => http.Response('', 500)),
-    ),
+    ai:
+        ai ??
+        AiService(
+          secrets: secrets,
+          httpClient: claude ?? MockClient((_) async => http.Response('', 500)),
+        ),
     openFoodFacts: OpenFoodFactsClient(
       off ?? MockClient((_) async => http.Response('', 404)),
     ),
@@ -147,6 +150,14 @@ Future<void> openTab(WidgetTester t, String label) async {
 /// Como [tapKey], para pantallas con animación continua (no "se asientan").
 Future<void> tapKeyAnimated(WidgetTester t, String key) async {
   final f = find.byKey(Key(key));
+  // Las listas largas construyen sus filas al desplazarse.
+  if (f.evaluate().isEmpty) {
+    await t.scrollUntilVisible(
+      f,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+  }
   await t.ensureVisible(f);
   await t.pump();
   await t.tap(f);

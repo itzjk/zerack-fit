@@ -1,11 +1,18 @@
+import 'dart:typed_data';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
 import '../../ai/assistant.dart';
 import '../../ai/claude_client.dart';
+import '../../ai/voice_service.dart';
+import '../../data/models.dart' show weekdayNamesEs;
 import '../../services.dart';
 import '../common/ai_gate.dart';
 import '../common/portion_sheet.dart';
 import '../scope.dart';
+import '../strings.dart';
+import '../train/workout_page.dart';
 
 class AssistantPage extends StatelessWidget {
   const AssistantPage({super.key});
@@ -13,11 +20,43 @@ class AssistantPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const AiGate(
-      feature: 'usar el asistente',
+      feature: 'usar el agente',
       sends: 'tus mensajes, tu perfil, tu meta y lo que registraste',
       child: _Chat(),
     );
   }
+}
+
+/// Reproduce MP3. Interfaz para poder probar sin audio real.
+abstract interface class AudioOut {
+  Future<void> play(List<int> mp3);
+  Future<void> stop();
+}
+
+class _PlayerOut implements AudioOut {
+  AudioPlayer? _player;
+
+  @override
+  Future<void> play(List<int> mp3) async {
+    final p = _player ??= AudioPlayer();
+    await p.stop();
+    await p.play(BytesSource(Uint8List.fromList(mp3), mimeType: 'audio/mpeg'));
+  }
+
+  @override
+  Future<void> stop() async => _player?.stop();
+}
+
+/// Permite inyectar un reproductor falso en pruebas.
+class AudioScope extends InheritedWidget {
+  const AudioScope({super.key, required this.out, required super.child});
+  final AudioOut out;
+
+  static AudioOut? maybeOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<AudioScope>()?.out;
+
+  @override
+  bool updateShouldNotify(AudioScope old) => out != old.out;
 }
 
 class _Chat extends StatefulWidget {
@@ -31,30 +70,58 @@ class _ChatState extends State<_Chat> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
   Assistant? _assistant;
+  VoiceService? _voice;
+  AudioOut _audio = _PlayerOut();
   bool _busy = false;
   String? _error;
-  final Set<FoodProposal> _saved = {};
+  ChatTurn? _speaking;
+  final Set<AgentAction> _done = {};
 
   static const _suggestions = [
     '¿Cuánta proteína me falta hoy?',
     'Desayuné 2 huevos y 2 tortillas',
-    '¿Qué ceno para llegar a mi meta?',
-    '¿Cómo voy esta semana?',
+    'Completa mi proteína de hoy',
+    '¿Qué músculos puedo entrenar hoy?',
+    '¿Por qué mi meta es de esas calorías?',
+    'Quiero entrenar 4 días',
   ];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    ServicesScope.of(context).ai.assistant(AppScope.of(context)).then((a) {
-      if (mounted) setState(() => _assistant = a);
-    });
+    final ai = ServicesScope.of(context).ai;
+    final state = AppScope.of(context);
+    final injected = AudioScope.maybeOf(context);
+    if (injected != null) _audio = injected;
+    if (_assistant == null) {
+      ai.assistant(state).then((a) {
+        if (mounted) setState(() => _assistant = a);
+      });
+      ai.voice(state).then((v) {
+        if (mounted) setState(() => _voice = v);
+      });
+    }
   }
 
   @override
   void dispose() {
     _input.dispose();
     _scroll.dispose();
+    _audio.stop();
     super.dispose();
+  }
+
+  Future<void> _speak(ChatTurn t) async {
+    final v = _voice;
+    if (v == null) return;
+    setState(() => _speaking = t);
+    try {
+      await _audio.play(await v.synthesize(t.text));
+    } on Object catch (e) {
+      if (mounted) setState(() => _error = describeClaudeError(e));
+    } finally {
+      if (mounted) setState(() => _speaking = null);
+    }
   }
 
   Future<void> _send(String text) async {
@@ -66,7 +133,11 @@ class _ChatState extends State<_Chat> {
     });
     _input.clear();
     try {
-      await a.send(text);
+      final turn = await a.send(text);
+      if (mounted && AppScope.of(context).settings.voiceReplies) {
+        // Sin await: la voz no bloquea el chat.
+        _speak(turn);
+      }
     } on Object catch (e) {
       if (mounted) setState(() => _error = describeClaudeError(e));
     } finally {
@@ -85,30 +156,74 @@ class _ChatState extends State<_Chat> {
     }
   }
 
-  Future<void> _accept(FoodProposal p) async {
+  Future<void> _run(AgentAction action) async {
     final state = AppScope.of(context);
-    for (final i in p.items) {
-      await state.addFoodFromDb(i.food, i.grams);
+    switch (action) {
+      case FoodProposal(:final items):
+        for (final i in items) {
+          await state.addFoodFromDb(i.food, i.grams);
+        }
+      case PlanChangeProposal():
+        await action.apply(state);
+      case StartWorkoutAction(:final workout):
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => WorkoutPage(template: workout),
+          ),
+        );
+        return;
+      case RuleCitation():
+        return;
     }
-    setState(() => _saved.add(p));
+    if (mounted) setState(() => _done.add(action));
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = AppScope.of(context);
     final turns = _assistant?.turns ?? const <ChatTurn>[];
     final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     return Column(
       children: [
         AppBar(
-          title: const Text(assistantName),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(assistantName),
+              if (_assistant != null)
+                Text(
+                  _assistant!.providerLabel,
+                  key: const Key('agent-provider'),
+                  style: text.bodySmall,
+                ),
+            ],
+          ),
           actions: [
+            if (_voice != null)
+              IconButton(
+                key: const Key('voice-toggle'),
+                tooltip: state.settings.voiceReplies
+                    ? 'Silenciar respuestas'
+                    : 'Leer respuestas en voz alta',
+                icon: Icon(
+                  state.settings.voiceReplies
+                      ? Icons.volume_up
+                      : Icons.volume_off_outlined,
+                ),
+                onPressed: () {
+                  final on = !state.settings.voiceReplies;
+                  if (!on) _audio.stop();
+                  state.saveSettings(state.settings.copyWith(voiceReplies: on));
+                },
+              ),
             IconButton(
               tooltip: 'Nueva conversación',
               icon: const Icon(Icons.refresh),
               onPressed: () {
-                final services = ServicesScope.of(context);
-                services.ai.resetConversation();
-                services.ai.assistant(AppScope.of(context)).then((a) {
+                final ai = ServicesScope.of(context).ai;
+                ai.resetConversation();
+                ai.assistant(state).then((a) {
                   if (mounted) setState(() => _assistant = a);
                 });
               },
@@ -122,8 +237,10 @@ class _ChatState extends State<_Chat> {
                   children: [
                     const Text(
                       'Pregúntame sobre tu comida o tu entrenamiento. Conozco '
-                      'tu perfil, tu meta y lo que registraste hoy. No doy '
-                      'consejo médico.',
+                      'tu perfil, tu meta, tu chequeo y lo que registraste. '
+                      'Puedo anotar comida, ajustar tu plan, abrir tu sesión '
+                      'y explicarte cada regla con su fuente. No doy consejo '
+                      'médico.',
                     ),
                     const SizedBox(height: 16),
                     Wrap(
@@ -157,12 +274,30 @@ class _ChatState extends State<_Chat> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SelectableText(t.text),
-                                if (t.proposal != null)
-                                  _ProposalCard(
-                                    proposal: t.proposal!,
-                                    saved: _saved.contains(t.proposal),
-                                    onAccept: () => _accept(t.proposal!),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: SelectableText(t.text)),
+                                    if (!t.fromUser && _voice != null)
+                                      IconButton(
+                                        key: Key('speak-$i'),
+                                        tooltip: 'Escuchar',
+                                        visualDensity: VisualDensity.compact,
+                                        icon: Icon(
+                                          _speaking == t
+                                              ? Icons.graphic_eq
+                                              : Icons.volume_up_outlined,
+                                          size: 18,
+                                        ),
+                                        onPressed: () => _speak(t),
+                                      ),
+                                  ],
+                                ),
+                                for (final a in t.actions)
+                                  _ActionCard(
+                                    action: a,
+                                    done: _done.contains(a),
+                                    onRun: () => _run(a),
                                   ),
                               ],
                             ),
@@ -177,7 +312,11 @@ class _ChatState extends State<_Chat> {
         if (_error != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(_error!, style: TextStyle(color: scheme.error)),
+            child: Text(
+              _error!,
+              key: const Key('agent-error'),
+              style: TextStyle(color: scheme.error),
+            ),
           ),
         SafeArea(
           top: false,
@@ -214,44 +353,86 @@ class _ChatState extends State<_Chat> {
   }
 }
 
-class _ProposalCard extends StatelessWidget {
-  const _ProposalCard({
-    required this.proposal,
-    required this.saved,
-    required this.onAccept,
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.action,
+    required this.done,
+    required this.onRun,
   });
-  final FoodProposal proposal;
-  final bool saved;
-  final VoidCallback onAccept;
+  final AgentAction action;
+  final bool done;
+  final VoidCallback onRun;
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    Widget button(String key, String label, String doneLabel) => done
+        ? Row(
+            key: Key('$key-done'),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle, size: 18),
+              const SizedBox(width: 6),
+              Text(doneLabel),
+            ],
+          )
+        : FilledButton(key: Key(key), onPressed: onRun, child: Text(label));
+
+    final List<Widget> body = switch (action) {
+      FoodProposal(:final items, :final reason, :final total) => [
+        if (reason != null) Text(reason, style: text.labelLarge),
+        for (final i in items)
+          Text(
+            '• ${i.food.name}, ${i.grams.round()} g: '
+            '${i.food.forGrams(i.grams).kcal.round()} kcal',
+          ),
+        const SizedBox(height: 8),
+        NutrientRow(total),
+        const SizedBox(height: 8),
+        button('proposal-accept', 'Agregar a mi día', 'Agregado a tu día'),
+        Text('Nutrientes del USDA FoodData Central.', style: text.bodySmall),
+      ],
+      PlanChangeProposal(:final level, :final daysPerWeek, :final gymAccess) =>
+        [
+          Text('Nuevo plan', style: text.labelLarge),
+          Text(
+            '${Es.level(level)} · $daysPerWeek días por semana · '
+            '${gymAccess ? 'gimnasio' : 'en casa'}',
+          ),
+          const SizedBox(height: 8),
+          button('plan-accept', 'Aplicar plan', 'Plan aplicado'),
+          Text('Frecuencias de ACSM 2009.', style: text.bodySmall),
+        ],
+      StartWorkoutAction(:final weekday, :final workout) => [
+        Text(
+          '${weekdayNamesEs[weekday - 1]}: ${workout.name}',
+          style: text.labelLarge,
+        ),
+        Text('${workout.exercises.length} ejercicios'),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          key: const Key('workout-open'),
+          icon: const Icon(Icons.play_arrow),
+          label: const Text('Empezar sesión guiada'),
+          onPressed: onRun,
+        ),
+      ],
+      RuleCitation(:final rule) => [
+        Text(rule.title, style: text.labelLarge),
+        Text(rule.summary),
+        const SizedBox(height: 4),
+        Text(
+          'Fuente: ${rule.source.citation}',
+          key: Key('rule-${rule.id}'),
+          style: text.bodySmall,
+        ),
+      ],
+    };
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Divider(),
-          for (final i in proposal.items)
-            Text(
-              '• ${i.food.name}, ${i.grams.round()} g: '
-              '${i.food.forGrams(i.grams).kcal.round()} kcal',
-            ),
-          const SizedBox(height: 8),
-          NutrientRow(proposal.total),
-          const SizedBox(height: 8),
-          saved
-              ? const Text('✓ Agregado a tu día')
-              : FilledButton(
-                  key: const Key('proposal-accept'),
-                  onPressed: onAccept,
-                  child: const Text('Agregar a mi día'),
-                ),
-          Text(
-            'Nutrientes del USDA FoodData Central.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+        children: [const Divider(), ...body],
       ),
     );
   }

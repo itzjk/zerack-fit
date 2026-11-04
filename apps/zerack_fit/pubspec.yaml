@@ -1,12 +1,13 @@
 name: zerack_fit
 description: "ZERACK Fit: entrenamiento adaptado a tu salud. Local-first."
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.3.0+3
 
 environment:
   sdk: ^3.8.0
 
 dependencies:
+  audioplayers: ^6.8.1
   camera: ^0.12.1
   fl_chart: ^1.2.0
   flutter:
