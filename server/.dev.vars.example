@@ -1,0 +1,4 @@
+# Copia este archivo a .dev.vars (que NO se sube a git) para `npm run dev`.
+GEMINI_API_KEY=pon-tu-clave-de-gemini
+FISH_API_KEY=pon-tu-clave-de-fish
+# FISH_VOICE_ID=id-de-la-voz

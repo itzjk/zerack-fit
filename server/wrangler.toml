@@ -1,0 +1,30 @@
+# ZERACK Fit — servidor intermedio (Cloudflare Worker).
+# Las claves NO van aquí: se guardan como secretos con `npx wrangler secret put …`
+# (ver DEPLOY.md). Este archivo es público en el repo.
+
+name = "zerack-fit-server"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Contadores de límite diario. Crea el namespace con
+#   npx wrangler kv namespace create RATE
+# y pega aquí el "id" que te devuelve en lugar del marcador.
+[[kv_namespaces]]
+binding = "RATE"
+id = "PEGA_AQUI_EL_ID_DEL_KV"
+
+[vars]
+# Modelos de Gemini que la app puede pedir (separados por comas).
+GEMINI_MODELS = "gemini-3.6-flash"
+# Peticiones por dispositivo y día (UTC).
+DAILY_LIMIT = "60"
+TTS_DAILY_LIMIT = "40"
+# Peticiones por IP y día (UTC), sumando Gemini y voz.
+IP_DAILY_LIMIT = "300"
+# Orígenes web permitidos (las apps nativas no mandan Origin y siempre pasan).
+ALLOWED_ORIGINS = "https://itzjk.github.io,http://localhost:8765"
+# Modelo de Fish Audio (cabecera `model`). Valores: s1, s2-pro, s2.1-pro, s2.1-pro-free, drama-3.
+FISH_MODEL = "s2.1-pro"
+# FISH_VOICE_ID es opcional: guárdalo como secreto (`npx wrangler secret put FISH_VOICE_ID`)
+# o añádelo aquí como var si no te importa que sea público.
