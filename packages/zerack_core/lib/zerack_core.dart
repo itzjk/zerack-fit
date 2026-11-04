@@ -3,6 +3,8 @@ library;
 
 export 'src/activity/weekly.dart';
 export 'src/energy/energy.dart';
+export 'src/insights/complete_day.dart';
+export 'src/insights/recovery.dart';
 export 'src/nutrition/food.dart';
 export 'src/nutrition/goals.dart';
 export 'src/ppg/pulse.dart';
